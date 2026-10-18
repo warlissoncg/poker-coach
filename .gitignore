@@ -5,3 +5,4 @@ node_modules/
 .vscode/
 /package.json
 /package-lock.json
+.git-*-backup/
