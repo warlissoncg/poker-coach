@@ -41,11 +41,11 @@ describe("chenScore", () => {
 });
 
 describe("references", () => {
-  it("is labeled heuristic and sensible", () => {
+  it("is labeled coach-rules and sensible", () => {
     expect(preflopReference("btn_open", h("Ah Ad")).preferred).toEqual(["raise"]);
     expect(preflopReference("btn_open", h("7h 2d")).preferred).toEqual(["fold"]);
     expect(preflopReference("bb_defend", h("Ah Ad")).preferred).toEqual(["3bet"]);
-    expect(preflopReference("bb_defend", h("7h 2d")).source).toBe("heuristic");
+    expect(preflopReference("bb_defend", h("7h 2d")).source).toBe("coach-rules");
   });
   it("computes required equity from pot odds", () => {
     expect(Math.round(requiredEquity(33, 133) * 1000)).toBe(199);

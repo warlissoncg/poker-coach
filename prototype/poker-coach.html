@@ -21,7 +21,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 </style></head><body><div class="w">
 <h1>♠ Poker Coach <span class="mu">— prototype (NLHE cash, BTN vs BB)</span></h1>
 <nav id="nav"></nav><div id="main"></div>
-<p class="mu">Prototype notice: feedback uses simple <b>heuristic</b> rules (hand strength tiers, Chen score, pot odds). It is <b>not solver output</b> and no EV or GTO frequencies are claimed. Decisions are stored only in this browser.</p>
+<p class="mu">Prototype notice: feedback uses simple <b>rule-based</b> rules (hand strength tiers, Chen score, pot odds). It is <b>not solver output</b> and no EV or GTO frequencies are claimed. Decisions are stored only in this browser.</p>
 </div>
 <script>
 const RK='23456789TJQKA',SU=['♠','♥','♦','♣'],$=s=>document.querySelector(s),rnd=Math.random,r1=x=>Math.round(x*10)/10;
@@ -46,7 +46,7 @@ const SP={open:'BTN open',bb:'BB defend vs BTN',f0:'Flop bet (BTN, IP)',f1:'Turn
 const TX={dry:'dry',wet:'wet / connected',paired:'paired',mono:'monotone'};for(const t in TX){SP['f0_'+t]=`Flop c-bet, ${TX[t]} board (BTN, IP)`;SP['o0_'+t]=`Flop lead, ${TX[t]} board (BB, OOP)`}Object.assign(SP,{o1:'Turn lead (BB, OOP)',o2:'River lead (BB, OOP)',w0:'Facing flop bet (BB, OOP)',w1:'Facing turn bet (BB, OOP)',w2:'Facing river bet (BB, OOP)'});
 function texOf(c){c=c.slice(0,3);const s=[0,1,2,3].map(i=>c.filter(x=>x.s==i).length),r=c.map(x=>x.r).sort((a,b)=>a-b);if(Math.max(...s)==3)return'mono';if(new Set(r).size<3)return'paired';return Math.max(...s)==2||r[2]-r[0]<=4?'wet':'dry'}
 function betRef(t,s,tx,oop){if(oop&&s==0)return{pref:['check'],ok:t=='strong'||t=='draw'?['bet']:[]};if(t=='strong'||(t=='draw'&&s<2))return{pref:['bet'],ok:['check']};if(s==0&&t=='medium'&&tx=='dry')return{pref:['bet'],ok:['check']};if(s==0&&t=='air')return tx=='wet'||tx=='mono'?{pref:['check'],ok:['bet']}:{pref:['bet'],ok:['check']};return{pref:['check'],ok:['bet']}}
-function betJ(a){const t=tier(G.hero,G.board),s=G.street,tx=texOf(G.board),o=G.mode=='oop',ref=betRef(t,s,tx,o);ref.why=`You hold ${TW[t]}${s==0?` on a ${TX[tx]} flop`:''}. Heuristic: value-bet strong hands and semi-bluff draws; ${o?'out of position, check most of your range on the flop':'c-bet dry boards wider and wet boards tighter (small size on dry, bigger on wet)'}.`;judge((o?'o':'f')+s+(s==0?'_'+tx:''),a,ref,G.t0)}
+function betJ(a){const t=tier(G.hero,G.board),s=G.street,tx=texOf(G.board),o=G.mode=='oop',ref=betRef(t,s,tx,o);ref.why=`You hold ${TW[t]}${s==0?` on a ${TX[tx]} flop`:''}. Coach rule: value-bet strong hands and semi-bluff draws; ${o?'out of position, check most of your range on the flop':'c-bet dry boards wider and wet boards tighter (small size on dry, bigger on wet)'}.`;judge((o?'o':'f')+s+(s==0?'_'+tx:''),a,ref,G.t0)}
 const TW={strong:'a strong made hand',medium:'a medium-strength made hand',draw:'a drawing hand',air:'a weak hand with little showdown value'};
 let G=null,view='dash';
 const load=()=>{try{return JSON.parse(localStorage.getItem('pk_dec')||'[]')}catch(e){return[]}};
@@ -54,7 +54,7 @@ function save(d){try{const a=load();a.push(d);localStorage.setItem('pk_dec',JSON
 function judge(spot,act,ref,t0){const ok=ref.pref.includes(act)?1:ref.ok.includes(act)?.5:0;let dev='';
 if(!ok){dev=act=='fold'?'too tight / over-folding':ref.pref.includes('fold')?'too loose':['bet','raise','3bet'].includes(act)?'over-aggressive':'too passive'}
 else if(ok==.5)dev='';save({spot,act,ok,dev,t:Date.now(),ms:Date.now()-t0});
-const cls=ok==1?'g':ok?'o':'b';G.fb.push(`<div class="fb ${cls}"><b>${SP[spot]}</b>: you chose <b>${act}</b>. Heuristic preferred: <b>${ref.pref.join(' / ')}</b>${ref.ok.length?` (acceptable: ${ref.ok.join(', ')})`:''}. ${ref.why}</div>`);G.t0=Date.now()}
+const cls=ok==1?'g':ok?'o':'b';G.fb.push(`<div class="fb ${cls}"><b>${SP[spot]}</b>: you chose <b>${act}</b>. Compass route: <b>${ref.pref.join(' / ')}</b>${ref.ok.length?` (acceptable: ${ref.ok.join(', ')})`:''}. ${ref.why}</div>`);G.t0=Date.now()}
 function start(mode,tx){tx=tx||'any';let d=newDeck();if(tx!='any')for(let i=0;i<800&&texOf(d.slice(45,48))!=tx;i++)d=newDeck();G={mode,tx,d,hero:[d.pop(),d.pop()],vil:[d.pop(),d.pop()],hs:100,vs:100,pot:1.5,board:[],street:-1,log:[],fb:[],done:false,hc:false,face:0,t0:Date.now(),res:''};
 if(mode=='bb'||mode=='oop'){G.vs=97.5;G.hs=99;G.pot=4;G.face=1.5;G.log.push('BTN opens to 2.5bb')}else G.hs=100;view='play';render()}
 function end(win,msg){if(win=='h')G.hs+=G.pot;else if(win=='s')G.hs+=G.pot/2;G.done=true;G.res=`${msg} Net result: ${r1(G.hs-100)>=0?'+':''}${r1(G.hs-100)}bb.`;if(G.mode=='bb'||G.noNet)G.res=msg;render()}
@@ -64,14 +64,14 @@ G.log.push(`${['Flop','Turn','River'][G.street]}: BB checks`);render()}
 function showdown(){const a=best([...G.hero,...G.board]),b=best([...G.vil,...G.board]);G.log.push(`Showdown: BB shows ${G.vil.map(x=>RK[x.r]+SU[x.s]).join(' ')}`);end(a>b?'h':a<b?'v':'s',a>b?'You win at showdown.':a<b?'You lose at showdown.':'Split pot.')}
 function adv(){G.street==2?showdown():deal()}
 function pre(a){const ch=chen(G.hero);let ref;
-if(G.mode=='bb'||G.mode=='oop'){ref=ch>=11?{pref:['3bet'],ok:['call']}:ch>=6?{pref:['call'],ok:[]}:ch==5?{pref:['call'],ok:['fold']}:ch==4?{pref:['fold'],ok:['call']}:{pref:['fold'],ok:[]};ref.why=`Chen score ${ch}: heuristic BB defends wide vs a 2.5x open at good pot odds and 3-bets premium hands.`;judge('bb',a,ref,G.t0);
+if(G.mode=='bb'||G.mode=='oop'){ref=ch>=11?{pref:['3bet'],ok:['call']}:ch>=6?{pref:['call'],ok:[]}:ch==5?{pref:['call'],ok:['fold']}:ch==4?{pref:['fold'],ok:['call']}:{pref:['fold'],ok:[]};ref.why=`Chen score ${ch}: rule-based BB defends wide vs a 2.5x open at good pot odds and 3-bets premium hands.`;judge('bb',a,ref,G.t0);
 G.log.push('You '+a);if(G.mode=='oop'&&a=='call'){G.hs=97.5;G.pot=5.5;return deal()}G.noNet=G.mode=='oop'&&a=='3bet';return end(a=='fold'&&G.mode=='oop'?'v':'x',G.mode=='oop'?(a=='fold'?'You folded the BB.':'3-bet: hand ends here (no post-flop).'):'Spot drill complete.')}
-ref=ch>=6?{pref:['raise'],ok:[]}:ch==5?{pref:['raise'],ok:['fold']}:{pref:['fold'],ok:[]};ref.why=`Chen score ${ch}: heuristic BTN opens roughly the top ~45% of hands.`;judge('open',a,ref,G.t0);
+ref=ch>=6?{pref:['raise'],ok:[]}:ch==5?{pref:['raise'],ok:['fold']}:{pref:['fold'],ok:[]};ref.why=`Chen score ${ch}: rule-based BTN opens roughly the top ~45% of hands.`;judge('open',a,ref,G.t0);
 if(a=='fold'){G.log.push('You fold');return end('v','You folded.')}
 G.hs=97.5;G.pot=4;G.log.push('You raise to 2.5bb');if(chen(G.vil)>=4||rnd()<.1){G.vs=97.5;G.pot=5.5;G.log.push('BB calls');deal()}else{G.log.push('BB folds');end('h','BB folds.')}}
 function bet(x){x=r1(+x);if(!(x>=1&&x<=G.hs&&x<=G.vs)&&x!=G.hs){alert('Illegal size: bet between 1bb and your effective stack.');return}x=Math.min(x,G.hs,G.vs);const t=tier(G.hero,G.board),s=G.street;
 const ref=t=='strong'?{pref:['bet'],ok:['check']}:t=='draw'&&s<2?{pref:['bet'],ok:['check']}:s==0&&t=='air'?{pref:['bet'],ok:['check']}:{pref:['check'],ok:['bet']};
-ref.why=`You hold ${TW[t]}. Heuristic: value-bet strong hands, semi-bluff draws, check medium/weak hands more often.`;betJ('bet');
+ref.why=`You hold ${TW[t]}. Coach rule: value-bet strong hands, semi-bluff draws, check medium/weak hands more often.`;betJ('bet');
 const pb=G.pot;G.hs-=x;G.pot+=x;G.log.push(`You bet ${x}bb`);const vt=tier(G.vil,G.board),pc={strong:1,medium:x/pb<=.7?.8:.5,draw:G.board.length<5?.7:0,air:.12}[vt];
 if(rnd()<pc){G.vs-=x;G.pot+=x;G.log.push('BB calls');G.hc=false;adv()}else{G.log.push('BB folds');end('h','BB folds.')}}
 function chk(){const t=tier(G.hero,G.board),s=G.street;const ref=t=='strong'||(t=='draw'&&s<2)||(s==0&&t=='air')?{pref:['bet'],ok:['check']}:{pref:['check'],ok:['bet']};
@@ -89,14 +89,14 @@ function play(){const showV=G.done&&G.mode!='bb';return`<div class="felt"><div>$
 <div style="margin-top:8px">Your hand: ${G.hero.map(cs).join('')}${showV&&G.street>=0?` &nbsp; Villain: ${G.vil.map(cs).join('')}`:''}</div></div>
 <div class="c" style="margin-top:12px"><div class="row">${actions()}</div></div>
 <div class="c"><h2>Action</h2><div class="mu">${G.log.join(' → ')||'Your decision first.'}</div>${G.res?`<p><b>${G.res}</b></p>`:''}</div>
-<div class="c"><h2>Feedback <span class="tag">heuristic, not solver</span></h2>${G.fb.join('')||'<span class="mu">Decide to see feedback.</span>'}</div>`}
+<div class="c"><h2>Feedback <span class="tag">rule-based, not solver</span></h2>${G.fb.join('')||'<span class="mu">Decide to see feedback.</span>'}</div>`}
 function dash(){const D=load(),n=D.length,ac=n?D.reduce((a,d)=>a+d.ok,0)/n:0;const by={};D.forEach(d=>{(by[d.spot]=by[d.spot]||[]).push(d)});
 const rows=Object.keys(by).map(k=>{const a=by[k],m=a.reduce((x,d)=>x+d.ok,0)/a.length,bad=a.filter(d=>!d.ok),dv={};bad.forEach(d=>dv[d.dev]=(dv[d.dev]||0)+1);const top=Object.entries(dv).sort((x,y)=>y[1]-x[1])[0];
 const rate=bad.length/a.length;let st='OK',lk=null;if(a.length<8)st='Too few hands (n<8)';else if(rate>=.3&&top){st=a.length<20?'Preliminary leak':'Likely leak';lk={k,top:top[0],rate,n:a.length,st}}return{k,n:a.length,m,top:top&&rate>0?top[0]:'—',st,lk}});
 const leaks=rows.filter(r=>r.lk).map(r=>r.lk);
-return`<div class="c"><h2>Dashboard</h2><div class="row"><span><b>${n}</b> decisions</span><span>Reference-aligned score: <b>${n?Math.round(ac*100)+'%':'—'}</b></span></div><p class="mu">Alignment compares your choice with a heuristic reference (1 = preferred, 0.5 = acceptable). Results of hands are never used to judge decisions.</p></div>
+return`<div class="c"><h2>Dashboard</h2><div class="row"><span><b>${n}</b> decisions</span><span>Reference-aligned score: <b>${n?Math.round(ac*100)+'%':'—'}</b></span></div><p class="mu">Alignment compares your choice with a coach-rules reference (1 = preferred, 0.5 = acceptable). Results of hands are never used to judge decisions.</p></div>
 <div class="c"><h2>Spot performance</h2><div class="wrap"><table><tr><th>Spot</th><th>n</th><th>Aligned</th><th>Main deviation</th><th>Status</th></tr>${rows.map(r=>`<tr><td>${SP[r.k]}</td><td>${r.n}</td><td>${Math.round(r.m*100)}%</td><td>${r.top}</td><td>${r.st}</td></tr>`).join('')||'<tr><td colspan=5 class="mu">No data yet — play some drills.</td></tr>'}</table></div></div>
-<div class="c"><h2>Detected leaks &amp; recommended drills</h2>${leaks.map(l=>`<div class="fb b"><b>${l.st}: ${SP[l.k]}</b> — you deviated from the heuristic reference in ${Math.round(l.rate*100)}% of ${l.n} decisions, mostly <b>${l.top}</b>. ${l.st=='Preliminary leak'?'Sample is small; treat as a hypothesis.':''}<div class="row" style="margin-top:6px"><button class="p" onclick="start('${l.k=='bb'?'bb':/^[ow]/.test(l.k)?'oop':'open'}','${l.k.split('_')[1]||'any'}')">Practice this spot</button></div></div>`).join('')||'<span class="mu">No leak flagged. Flags require at least 8 decisions in a spot and a 30%+ misalignment rate.</span>'}</div>
+<div class="c"><h2>Detected leaks &amp; recommended drills</h2>${leaks.map(l=>`<div class="fb b"><b>${l.st}: ${SP[l.k]}</b> — you deviated from the coach-rules reference in ${Math.round(l.rate*100)}% of ${l.n} decisions, mostly <b>${l.top}</b>. ${l.st=='Preliminary leak'?'Sample is small; treat as a hypothesis.':''}<div class="row" style="margin-top:6px"><button class="p" onclick="start('${l.k=='bb'?'bb':/^[ow]/.test(l.k)?'oop':'open'}','${l.k.split('_')[1]||'any'}')">Practice this spot</button></div></div>`).join('')||'<span class="mu">No leak flagged. Flags require at least 8 decisions in a spot and a 30%+ misalignment rate.</span>'}</div>
 <div class="c"><button onclick="if(confirm('Delete all saved decisions?')){try{localStorage.removeItem('pk_dec')}catch(e){}render()}">Reset data</button></div>`}
 function train(){return`<div class="c"><h2>Choose a drill</h2><p>Flop texture: <select id="tx"><option value="any">Any</option><option value="dry">Dry</option><option value="wet">Wet / connected</option><option value="paired">Paired</option><option value="mono">Monotone</option></select></p><div class="row"><button class="p" onclick="start('open',$('#tx').value)">Full hand: BTN vs BB (in position)</button><button class="p" onclick="start('oop',$('#tx').value)">Full hand: BB vs BTN (out of position)</button><button onclick="start('bb')">Spot: BB defense vs BTN 2.5x open</button></div>
 <p class="mu">Full hands keep an exact state: pot, stacks, contributions and only legal actions are offered. Villain is a simple rule-based bot (checks to you, probes after you check, folds weak hands to bets).</p></div>`}

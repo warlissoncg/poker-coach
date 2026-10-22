@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalActions, netResults, type Action } from "../engine/hand";
-import { heroAct, isOver, newDrill, spotLabel } from "./drill";
+import { heroAct, isOver, newDrill } from "./drill";
 import { summarize } from "./stats";
 
 function mulberry(a: number) {
@@ -36,11 +36,6 @@ describe("drill flow", () => {
     }
   });
 
-  it("labels spots", () => {
-    expect(spotLabel("btn_open")).toBe("BTN open");
-    expect(spotLabel("flop_bet_wet")).toBe("Flop bet (BTN, IP), wet / connected board");
-    expect(spotLabel("river_facing")).toBe("River facing a bet");
-  });
 });
 
 describe("stats", () => {

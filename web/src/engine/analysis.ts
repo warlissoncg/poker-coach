@@ -26,7 +26,7 @@ function boardCategory(board: Card[]): number {
   return pairs >= 2 ? 2 : pairs === 1 ? 1 : 0;
 }
 
-/** Rough hand-strength bucket for a 2-card hand on a 3-5 card board (heuristic, not solver). */
+/** Rough hand-strength bucket for a 2-card hand on a 3-5 card board (coach-rules, not solver). */
 export function handTier(hole: Card[], board: Card[]): Tier {
   const heroCat = categoryOf(evaluate([...hole, ...board]));
   if (heroCat >= 2 && heroCat > boardCategory(board)) return "strong";
@@ -79,19 +79,19 @@ export function requiredEquity(toCall: number, potBeforeCall: number): number {
 export interface Reference {
   preferred: string[];
   acceptable: string[];
-  source: "heuristic"; // never presented as solver output
+  source: "coach-rules"; // never presented as solver output
 }
 
 export function preflopReference(spot: "btn_open" | "bb_defend", hole: Card[]): Reference {
   const c = chenScore(hole);
   if (spot === "btn_open") {
-    if (c >= 6) return { preferred: ["raise"], acceptable: [], source: "heuristic" };
-    if (c === 5) return { preferred: ["raise"], acceptable: ["fold"], source: "heuristic" };
-    return { preferred: ["fold"], acceptable: [], source: "heuristic" };
+    if (c >= 6) return { preferred: ["raise"], acceptable: [], source: "coach-rules" };
+    if (c === 5) return { preferred: ["raise"], acceptable: ["fold"], source: "coach-rules" };
+    return { preferred: ["fold"], acceptable: [], source: "coach-rules" };
   }
-  if (c >= 11) return { preferred: ["3bet"], acceptable: ["call"], source: "heuristic" };
-  if (c >= 6) return { preferred: ["call"], acceptable: [], source: "heuristic" };
-  if (c === 5) return { preferred: ["call"], acceptable: ["fold"], source: "heuristic" };
-  if (c === 4) return { preferred: ["fold"], acceptable: ["call"], source: "heuristic" };
-  return { preferred: ["fold"], acceptable: [], source: "heuristic" };
+  if (c >= 11) return { preferred: ["3bet"], acceptable: ["call"], source: "coach-rules" };
+  if (c >= 6) return { preferred: ["call"], acceptable: [], source: "coach-rules" };
+  if (c === 5) return { preferred: ["call"], acceptable: ["fold"], source: "coach-rules" };
+  if (c === 4) return { preferred: ["fold"], acceptable: ["call"], source: "coach-rules" };
+  return { preferred: ["fold"], acceptable: [], source: "coach-rules" };
 }
