@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { legalActions, potSize, type Action, type HandState } from "../engine/hand";
-import { bb } from "../game/drill";
+import { HERO, bb } from "../game/drill";
 import { useI18n } from "../i18n";
 
 export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action) => void }) {
@@ -17,7 +17,7 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
   const clamp = (x: number) => (range ? Math.max(range.min, Math.min(range.max, Math.round(x / 10) * 10)) : 0);
   const presets = !range ? [] : [
     ...(hand.street === "preflop"
-      ? [{ label: "2.5bb", to: 250 }, { label: "3bb", to: 300 }]
+      ? hand.currentBet > hand.bb ? [2.2, 3, 4].map((m) => ({ label: `${m}x`, to: hand.currentBet * m })) : [{ label: "2.5bb", to: 250 }, { label: "3bb", to: 300 }]
       : [33, 66, 100].map((p) => ({ label: `${p}%`, to: kind === "bet" ? (pot * p) / 100 : hand.currentBet + ((pot + (legal?.call ?? 0)) * p) / 100 }))
     ).map((x) => ({ label: x.label, to: clamp(x.to) })),
     { label: t("a.allin"), to: range.max },
@@ -26,7 +26,7 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!legal || legal.playerId !== "btn" || e.ctrlKey || e.metaKey) return;
+      if (!legal || legal.playerId !== HERO || e.ctrlKey || e.metaKey) return;
       const k = e.key.toLowerCase();
       if (k === "f" && legal.fold) onAct({ type: "fold" });
       else if (k === "c") { if (legal.check) onAct({ type: "check" }); else if (legal.call !== null) onAct({ type: "call" }); }
@@ -37,7 +37,7 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  if (!legal || legal.playerId !== "btn") return null;
+  if (!legal || legal.playerId !== HERO) return null;
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">

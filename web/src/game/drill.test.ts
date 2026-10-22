@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { textureOf } from "../engine/analysis";
 import { legalActions, netResults, type Action } from "../engine/hand";
-import { heroAct, isOver, newDrill } from "./drill";
+import { HERO, SCENARIOS, heroAct, isOver, newDrill } from "./drill";
 import { summarize } from "./stats";
 
 function mulberry(a: number) {
@@ -13,34 +14,52 @@ function mulberry(a: number) {
 }
 
 describe("drill flow", () => {
-  it("plays 300 random hands to the end and accounts for every chip", () => {
-    for (let seed = 1; seed <= 300; seed++) {
-      const rng = mulberry(seed);
-      let d = newDrill(rng);
-      let steps = 0;
-      while (!isOver(d)) {
-        const l = legalActions(d.hand)!;
-        const opts: Action[] = [];
-        if (l.fold) opts.push({ type: "fold" });
-        if (l.check) opts.push({ type: "check" });
-        if (l.call !== null) opts.push({ type: "call" });
-        if (l.bet) opts.push({ type: "bet", to: l.bet.min + Math.floor(rng() * (l.bet.max - l.bet.min + 1)) });
-        if (l.raise) opts.push({ type: "raise", to: l.raise.min + Math.floor(rng() * (l.raise.max - l.raise.min + 1)) });
-        d = heroAct(d, opts[Math.floor(rng() * opts.length)], rng);
-        steps++;
-        if (steps > 40) throw new Error("hand did not finish");
-      }
-      expect(d.feedback.length).toBe(steps);
-      const net = netResults(d.hand);
-      expect(net.btn + net.bb).toBe(50); // the dead small blind goes to the winner
-    }
+  it("plays every scenario, stack depth and texture to the end, accounting for every chip", () => {
+    for (const scenario of SCENARIOS)
+      for (const stackBB of [40, 100, 200])
+        for (const texture of ["any", "wet"] as const)
+          for (let seed = 1; seed <= 25; seed++) {
+            const rng = mulberry(seed * 7 + stackBB);
+            let d = newDrill(rng, { scenario, stackBB, texture });
+            expect(legalActions(d.hand)!.playerId).toBe(HERO);
+            let steps = 0;
+            while (!isOver(d)) {
+              const l = legalActions(d.hand)!;
+              const opts: Action[] = [];
+              if (l.fold) opts.push({ type: "fold" });
+              if (l.check) opts.push({ type: "check" });
+              if (l.call !== null) opts.push({ type: "call" });
+              if (l.bet) opts.push({ type: "bet", to: l.bet.min + Math.floor(rng() * (l.bet.max - l.bet.min + 1)) });
+              if (l.raise) opts.push({ type: "raise", to: l.raise.min + Math.floor(rng() * (l.raise.max - l.raise.min + 1)) });
+              d = heroAct(d, opts[Math.floor(rng() * opts.length)], rng);
+              if (++steps > 40) throw new Error("hand did not finish");
+            }
+            expect(d.feedback.length).toBe(steps);
+            const net = netResults(d.hand);
+            expect(net.hero + net.villain).toBe(d.hand.deadMoney);
+          }
   });
 
+  it("sets the right price in each scripted spot", () => {
+    const vs = newDrill(mulberry(1), { scenario: "sb_vs_open" });
+    expect(legalActions(vs.hand)!.call).toBe(200);
+    expect(legalActions(vs.hand)!.raise!.min).toBe(400);
+    const f3 = newDrill(mulberry(2), { scenario: "facing_3bet" });
+    expect(legalActions(f3.hand)!.call).toBe(650);
+    expect(legalActions(f3.hand)!.raise!.min).toBe(1550);
+  });
+
+  it("honors the texture filter", () => {
+    for (const texture of ["dry", "paired", "mono"] as const) {
+      const d = newDrill(mulberry(3), { texture });
+      expect(textureOf(d.hand.boardRunout)).toBe(texture);
+    }
+  });
 });
 
 describe("stats", () => {
   it("flags leaks only with enough samples", () => {
-    const mk = (n: number, miss: number) => Array.from({ length: n }, (_, i) => ({ spot: "s", action: "fold", score: i < miss ? 0 : 1, deviation: "too tight", ts: i }));
+    const mk = (n: number, miss: number) => Array.from({ length: n }, (_, i) => ({ spot: "s", action: "fold", score: i < miss ? 0 : 1, deviation: "tight", ts: i }));
     expect(summarize(mk(5, 5)).spots[0].status).toBe("insufficient");
     expect(summarize(mk(10, 5)).spots[0].status).toBe("preliminary");
     expect(summarize(mk(25, 10)).spots[0].status).toBe("likely");

@@ -1,34 +1,68 @@
 import { newDeck } from "../engine/cards";
 import { applyAction, createHand, legalActions, netResults, potSize, type Action, type HandState } from "../engine/hand";
-import { chenScore, handTier, preflopReference, requiredEquity, textureOf, type Texture, type Tier } from "../engine/analysis";
+import { chenScore, handTier, preflopReference, requiredEquity, textureOf, type PreflopSpot, type Texture, type Tier } from "../engine/analysis";
 
 export type Rng = () => number;
+export type Scenario = PreflopSpot;
+export const SCENARIOS: Scenario[] = ["btn_open", "sb_open", "bb_defend", "sb_vs_open", "facing_3bet"];
+export interface DrillOptions { scenario: Scenario; stackBB: number; texture: Texture | "any" }
+export const DEFAULT_OPTIONS: DrillOptions = { scenario: "btn_open", stackBB: 100, texture: "any" };
 export type Deviation = "" | "tight" | "loose" | "aggressive" | "passive";
-export interface Why { kind: "open" | "facing" | "bet"; chen?: number; tier?: Tier; tex?: Texture; need?: number }
+export interface Why { kind: "pre" | "facing" | "bet"; chen?: number; tier?: Tier; tex?: Texture; need?: number }
 export interface Feedback { spot: string; action: string; preferred: string[]; acceptable: string[]; verdict: "good" | "ok" | "miss"; score: number; deviation: Deviation; why: Why }
-export interface LogEntry { street: string; who: "you" | "bb"; type: string; amount?: number }
-export interface Drill { hand: HandState; feedback: Feedback[]; log: LogEntry[] }
+export interface LogEntry { street: string; who: "you" | "opp"; type: string; amount?: number }
+export interface Drill { hand: HandState; feedback: Feedback[]; log: LogEntry[]; opts: DrillOptions }
 
-export const HERO = "btn";
-export const VILLAIN = "bb";
+export const HERO = "hero";
+export const VILLAIN = "villain";
 export const bb = (chips: number) => `${Math.round(chips) / 100}bb`;
 const isLive = (h: HandState) => h.street !== "complete" && h.street !== "showdown";
 export const isOver = (d: Drill) => !isLive(d.hand);
 
-export function newDrill(rng: Rng = Math.random): Drill {
-  const d = newDeck(rng);
+interface Setup { heroPos: string; vilPos: string; posted: { hero?: number; villain?: number }; dead: number; pre: string[]; post: string[]; minHero: number; minVil: number; script: (h: HandState) => HandState }
+const raise = (h: HandState, to: number) => applyAction(h, { type: "raise", to });
+const SETUPS: Record<Scenario, Setup> = {
+  btn_open: { heroPos: "BTN", vilPos: "BB", posted: { villain: 100 }, dead: 50, pre: [HERO, VILLAIN], post: [VILLAIN, HERO], minHero: -9, minVil: -9, script: (h) => h },
+  sb_open: { heroPos: "SB", vilPos: "BB", posted: { hero: 50, villain: 100 }, dead: 0, pre: [HERO, VILLAIN], post: [HERO, VILLAIN], minHero: -9, minVil: -9, script: (h) => h },
+  bb_defend: { heroPos: "BB", vilPos: "BTN", posted: { hero: 100 }, dead: 50, pre: [VILLAIN, HERO], post: [HERO, VILLAIN], minHero: -9, minVil: 5, script: (h) => raise(h, 250) },
+  sb_vs_open: { heroPos: "SB", vilPos: "BTN", posted: { hero: 50 }, dead: 100, pre: [VILLAIN, HERO], post: [HERO, VILLAIN], minHero: -9, minVil: 5, script: (h) => raise(h, 250) },
+  facing_3bet: { heroPos: "BTN", vilPos: "BB", posted: { villain: 100 }, dead: 50, pre: [HERO, VILLAIN], post: [VILLAIN, HERO], minHero: 5, minVil: 8, script: (h) => raise(raise(h, 250), 900) },
+};
+
+function entry(x: HandState["history"][number]): LogEntry {
+  const a = x.action;
+  return { street: x.street, who: x.playerId === HERO ? "you" : "opp", type: a.type, amount: a.type === "raise" ? a.to : a.type === "call" || a.type === "bet" ? x.added : undefined };
+}
+
+export function newDrill(rng: Rng = Math.random, o: Partial<DrillOptions> = {}): Drill {
+  const opts = { ...DEFAULT_OPTIONS, ...o };
+  const s = SETUPS[opts.scenario];
+  let d = newDeck(rng);
+  // Rejection sampling: redraw until the deal fits the spot (hand ranges and flop texture).
+  for (let i = 0; i < 1500; i++) {
+    const fits = chenScore([d[51], d[50]]) >= s.minHero && chenScore([d[49], d[48]]) >= s.minVil && (opts.texture === "any" || textureOf(d.slice(45, 48)) === opts.texture);
+    if (fits) break;
+    d = newDeck(rng);
+  }
   const hero = [d.pop()!, d.pop()!];
   const vil = [d.pop()!, d.pop()!];
   const board = [d.pop()!, d.pop()!, d.pop()!, d.pop()!, d.pop()!];
-  const hand = createHand({
-    bb: 100, deadMoney: 50, posted: { bb: 100 },
-    preflopOrder: [HERO, VILLAIN], postflopOrder: [VILLAIN, HERO], boardRunout: board,
-    players: [
-      { id: HERO, position: "BTN", stack: 10000, hole: hero },
-      { id: VILLAIN, position: "BB", stack: 10000, hole: vil },
-    ],
-  });
-  return { hand, feedback: [], log: [] };
+  const stack = opts.stackBB * 100;
+  const hand = s.script(createHand({
+    bb: 100, blindLevel: 100, deadMoney: s.dead,
+    posted: { [HERO]: s.posted.hero ?? 0, [VILLAIN]: s.posted.villain ?? 0 },
+    preflopOrder: s.pre, postflopOrder: s.post, boardRunout: board,
+    players: [{ id: HERO, position: s.heroPos, stack, hole: hero }, { id: VILLAIN, position: s.vilPos, stack, hole: vil }],
+  }));
+  return { hand, feedback: [], log: hand.history.map(entry), opts };
+}
+
+const lastRaiser = (h: HandState) => [...h.history].reverse().find((x) => x.street === "preflop" && x.action.type === "raise")?.playerId;
+const preRaises = (h: HandState) => h.history.filter((x) => x.street === "preflop" && x.action.type === "raise").length;
+
+function actionName(h: HandState, a: Action): string {
+  if (h.street === "preflop" && a.type === "raise") { const n = preRaises(h); return n === 0 ? "raise" : n === 1 ? "3bet" : "4bet"; }
+  return a.type;
 }
 
 function betRoute(t: Tier, street: string, tx: Texture) {
@@ -39,48 +73,61 @@ function betRoute(t: Tier, street: string, tx: Texture) {
 }
 
 /** Compass: rule-based coaching route for the hero's decision (not solver output). */
-function compass(hand: HandState, act: Action): Feedback {
+function compass(d: Drill, act: Action): Feedback {
+  const hand = d.hand;
   const legal = legalActions(hand)!;
   const hero = hand.players.find((p) => p.id === HERO)!;
+  const name = actionName(hand, act);
   let pref: string[], ok: string[], why: Why, spot: string;
   if (hand.street === "preflop") {
-    const r = preflopReference("btn_open", hero.hole);
-    pref = r.preferred; ok = r.acceptable; spot = "btn_open";
-    why = { kind: "open", chen: chenScore(hero.hole) };
+    const r = preflopReference(d.opts.scenario, hero.hole);
+    pref = r.preferred; ok = r.acceptable; spot = `pre_${d.opts.scenario}`;
+    why = { kind: "pre", chen: chenScore(hero.hole) };
   } else {
     const tier = handTier(hero.hole, hand.board);
     const facing = legal.call !== null;
     const tex = textureOf(hand.board);
-    spot = hand.street === "flop" && !facing ? `flop_bet_${tex}` : `${hand.street}_${facing ? "facing" : "bet"}`;
+    const ip = hand.postflopOrder[hand.postflopOrder.length - 1] === HERO;
+    const pot = preRaises(hand) >= 2 ? "3bp" : "srp";
+    spot = `${hand.street}_${facing ? "facing" : "bet"}_${ip ? "ip" : "oop"}_${pot}${hand.street === "flop" && !facing ? `_${tex}` : ""}`;
     if (facing) {
       const r = tier === "strong" ? { p: ["call"], o: ["raise"] } : tier === "medium" || tier === "draw" ? { p: ["call"], o: ["fold"] } : { p: ["fold"], o: [] as string[] };
       pref = r.p; ok = r.o;
       why = { kind: "facing", tier, need: Math.round(requiredEquity(legal.call!, potSize(hand)) * 100) };
     } else {
-      const r = betRoute(tier, hand.street, tex);
+      const caller = !ip && lastRaiser(hand) !== HERO && hand.street === "flop"; // out of position, not the aggressor: mostly check
+      const r = caller ? { p: ["check"], o: tier === "strong" || tier === "draw" ? ["bet"] : [] } : betRoute(tier, hand.street, tex);
       pref = r.p; ok = r.o;
       why = { kind: "bet", tier, tex: hand.street === "flop" ? tex : undefined };
     }
   }
-  const score = pref.includes(act.type) ? 1 : ok.includes(act.type) ? 0.5 : 0;
-  const deviation: Deviation = score > 0 ? "" : act.type === "fold" ? "tight" : pref.includes("fold") ? "loose" : act.type === "bet" || act.type === "raise" ? "aggressive" : "passive";
-  return { spot, action: act.type, preferred: pref, acceptable: ok, verdict: score === 1 ? "good" : score ? "ok" : "miss", score, deviation, why };
+  const score = pref.includes(name) ? 1 : ok.includes(name) ? 0.5 : 0;
+  const aggressive = ["bet", "raise", "3bet", "4bet"].includes(name);
+  const deviation: Deviation = score > 0 ? "" : name === "fold" ? "tight" : pref.includes("fold") ? "loose" : aggressive ? "aggressive" : "passive";
+  return { spot, action: name, preferred: pref, acceptable: ok, verdict: score === 1 ? "good" : score ? "ok" : "miss", score, deviation, why };
 }
 
-function villainAct(hand: HandState, rng: Rng): Action {
+function villainAct(hand: HandState, rng: Rng, sc: Scenario): Action {
   const l = legalActions(hand)!;
   const vil = hand.players.find((p) => p.id === VILLAIN)!;
   if (hand.street === "preflop") {
     if (l.check) return { type: "check" };
-    return chenScore(vil.hole) >= 4 || rng() < 0.1 ? { type: "call" } : { type: "fold" };
+    const c = chenScore(vil.hole);
+    const keep = sc === "bb_defend" || sc === "sb_vs_open" ? c >= 9 || rng() < 0.05 : sc === "facing_3bet" ? c >= 10 : sc === "sb_open" ? c >= 3 || rng() < 0.1 : c >= 4 || rng() < 0.1;
+    return keep ? { type: "call" } : { type: "fold" };
   }
   const tier = handTier(vil.hole, hand.board);
   if (l.check) {
+    const first = !hand.history.some((h) => h.street === hand.street);
+    const aggr = lastRaiser(hand) === VILLAIN;
     const prev = hand.street === "turn" ? "flop" : "turn";
-    const heroChecked = hand.history.some((h) => h.street === prev && h.playerId === HERO && h.action.type === "check");
-    if (hand.street !== "flop" && heroChecked && l.bet && rng() < { strong: 0.6, medium: 0.3, draw: 0.4, air: 0.25 }[tier]) {
-      const to = Math.max(l.bet.min, Math.min(l.bet.max, Math.round((potSize(hand) * 0.66) / 50) * 50));
-      return { type: "bet", to };
+    const heroCheckedPrev = hand.history.some((h) => h.street === prev && h.playerId === HERO && h.action.type === "check");
+    const A = { strong: 0.7, medium: 0.4, draw: 0.5, air: 0.35 }[tier];
+    const B = { strong: 0.6, medium: 0.3, draw: 0.4, air: 0.25 }[tier];
+    const p = aggr ? A : !first ? B : hand.street !== "flop" && heroCheckedPrev ? B : 0;
+    if (l.bet && p > 0 && rng() < p) {
+      const frac = aggr && hand.street === "flop" ? 0.5 : 0.66;
+      return { type: "bet", to: Math.max(l.bet.min, Math.min(l.bet.max, Math.round((potSize(hand) * frac) / 50) * 50)) };
     }
     return { type: "check" };
   }
@@ -90,24 +137,18 @@ function villainAct(hand: HandState, rng: Rng): Action {
   return l.call !== null && rng() < callP ? { type: "call" } : { type: "fold" };
 }
 
-function logLast(h: HandState, log: LogEntry[]) {
-  const x = h.history[h.history.length - 1];
-  const a = x.action;
-  log.push({ street: x.street, who: x.playerId === HERO ? "you" : "bb", type: a.type, amount: a.type === "raise" ? a.to : a.type === "call" || a.type === "bet" ? x.added : undefined });
-}
-
 export function heroAct(d: Drill, a: Action, rng: Rng = Math.random): Drill {
   const l = legalActions(d.hand);
   if (!l || l.playerId !== HERO) throw new Error("It is not the hero's turn");
-  const fb = compass(d.hand, a);
+  const fb = compass(d, a);
   const log = [...d.log];
   let h = applyAction(d.hand, a);
-  logLast(h, log);
+  log.push(entry(h.history[h.history.length - 1]));
   while (isLive(h) && legalActions(h)!.playerId === VILLAIN) {
-    h = applyAction(h, villainAct(h, rng));
-    logLast(h, log);
+    h = applyAction(h, villainAct(h, rng, d.opts.scenario));
+    log.push(entry(h.history[h.history.length - 1]));
   }
-  return { hand: h, feedback: [...d.feedback, fb], log };
+  return { hand: h, feedback: [...d.feedback, fb], log, opts: d.opts };
 }
 
 /** Net result for the hero, in big blinds. */

@@ -52,3 +52,12 @@ describe("references", () => {
     expect(requiredEquity(100, 200)).toBeGreaterThan(0.33);
   });
 });
+
+describe("new preflop spots", () => {
+  it("covers blind battle, SB defense and 3-bet defense", () => {
+    expect(preflopReference("sb_open", h("Ah Ad")).preferred).toEqual(["raise"]);
+    expect(preflopReference("sb_vs_open", h("Ah Ad")).preferred).toEqual(["3bet"]);
+    expect(preflopReference("facing_3bet", h("Ah Ad")).preferred).toEqual(["4bet"]);
+    expect(preflopReference("facing_3bet", h("7h 2d")).preferred).toEqual(["fold"]);
+  });
+});

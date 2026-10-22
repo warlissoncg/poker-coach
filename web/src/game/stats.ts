@@ -16,7 +16,7 @@ export function summarize(ds: Decision[]) {
   return { total: ds.length, aligned: ds.length ? ds.reduce((s, d) => s + d.score, 0) / ds.length : 0, spots };
 }
 
-const KEY = "pk_decisions_v3";
+const KEY = "pk_decisions_v4";
 const TOUR = "pk_tour_seen";
 export function loadDecisions(): Decision[] {
   try { return JSON.parse(localStorage.getItem(KEY) ?? "[]"); } catch { return []; }

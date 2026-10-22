@@ -57,6 +57,7 @@ export interface HandConfig {
   players: { id: string; position: string; stack: number; hole: Card[] }[];
   bb: number;
   posted?: Record<string, number>;
+  blindLevel?: number; // price to call when a blind is dead money
   deadMoney?: number;
   preflopOrder: string[];
   postflopOrder: string[];
@@ -90,7 +91,7 @@ export function createHand(cfg: HandConfig): HandState {
     players, bb: cfg.bb, deadMoney: cfg.deadMoney ?? 0,
     preflopOrder: cfg.preflopOrder, postflopOrder: cfg.postflopOrder,
     boardRunout: cfg.boardRunout, board: [], street: "preflop",
-    currentBet: Math.max(0, ...players.map((p) => p.committed)),
+    currentBet: Math.max(cfg.blindLevel ?? 0, ...players.map((p) => p.committed)),
     lastRaiseSize: cfg.bb, pending: [], history: [],
   };
   s.pending = cfg.preflopOrder.filter((id) => isActive(find(s, id)));

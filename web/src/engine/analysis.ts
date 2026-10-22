@@ -82,16 +82,21 @@ export interface Reference {
   source: "coach-rules"; // never presented as solver output
 }
 
-export function preflopReference(spot: "btn_open" | "bb_defend", hole: Card[]): Reference {
+export type PreflopSpot = "btn_open" | "bb_defend" | "sb_open" | "sb_vs_open" | "facing_3bet";
+
+export function preflopReference(spot: PreflopSpot, hole: Card[]): Reference {
   const c = chenScore(hole);
-  if (spot === "btn_open") {
-    if (c >= 6) return { preferred: ["raise"], acceptable: [], source: "coach-rules" };
-    if (c === 5) return { preferred: ["raise"], acceptable: ["fold"], source: "coach-rules" };
-    return { preferred: ["fold"], acceptable: [], source: "coach-rules" };
+  const r = (preferred: string[], acceptable: string[] = []): Reference => ({ preferred, acceptable, source: "coach-rules" });
+  switch (spot) {
+    case "btn_open":
+      return c >= 6 ? r(["raise"]) : c === 5 ? r(["raise"], ["fold"]) : r(["fold"]);
+    case "sb_open": // blind battle, SB acts first
+      return c >= 6 ? r(["raise"]) : c >= 3 ? r(["raise"], ["call"]) : c === 2 ? r(["call"], ["fold"]) : r(["fold"], ["call"]);
+    case "bb_defend":
+      return c >= 11 ? r(["3bet"], ["call"]) : c >= 6 ? r(["call"]) : c === 5 ? r(["call"], ["fold"]) : c === 4 ? r(["fold"], ["call"]) : r(["fold"]);
+    case "sb_vs_open": // SB facing a BTN open, BB still to act
+      return c >= 12 ? r(["3bet"], ["call"]) : c >= 8 ? r(["call"], ["fold"]) : c === 7 ? r(["fold"], ["call"]) : r(["fold"]);
+    case "facing_3bet":
+      return c >= 16 ? r(["4bet"], ["call"]) : c >= 11 ? r(["call"], ["4bet"]) : c >= 9 ? r(["call"], ["fold"]) : r(["fold"]);
   }
-  if (c >= 11) return { preferred: ["3bet"], acceptable: ["call"], source: "coach-rules" };
-  if (c >= 6) return { preferred: ["call"], acceptable: [], source: "coach-rules" };
-  if (c === 5) return { preferred: ["call"], acceptable: ["fold"], source: "coach-rules" };
-  if (c === 4) return { preferred: ["fold"], acceptable: ["call"], source: "coach-rules" };
-  return { preferred: ["fold"], acceptable: [], source: "coach-rules" };
 }
