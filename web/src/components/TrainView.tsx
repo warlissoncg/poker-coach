@@ -86,7 +86,7 @@ export function TrainView() {
       </div>
       <div className="space-y-2 rounded-lg border bg-card p-3">
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span>{t("progress.hands", { n: hands })}</span>
+          <span>{t("progress.hands", { n: hands + 1 })}</span>
           <span className="text-muted-foreground">{t("progress.spot", { n: currentSpotCount, goal: 8, p: statsProgress })}</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={statsProgress} aria-valuemin={0} aria-valuemax={100} aria-label={t("progress.spot.label")}>
