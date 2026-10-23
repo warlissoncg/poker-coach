@@ -1,4 +1,5 @@
 import { trainingStorage } from "../services/storage/trainingStorage";
+import type { Scenario } from "./drill";
 
 export interface Decision { spot: string; action: string; score: number; deviation: string; ts: number }
 export interface SpotStat { spot: string; n: number; aligned: number; topDeviation: string | null; status: "ok" | "insufficient" | "preliminary" | "likely" }
@@ -16,6 +17,31 @@ export function summarize(ds: Decision[]) {
     return { spot, n: a.length, aligned: a.reduce((s, d) => s + d.score, 0) / a.length, topDeviation: top, status };
   });
   return { total: ds.length, aligned: ds.length ? ds.reduce((s, d) => s + d.score, 0) / ds.length : 0, spots };
+}
+
+export interface RecommendedFocus { spot: string; scenario: Scenario; aligned: number; n: number }
+
+/** Pick the user's least-aligned spot with enough observations and map it to a drill scenario. */
+export function recommendFocus(ds: Decision[]): RecommendedFocus | null {
+  const candidates = summarize(ds).spots
+    .filter((s) => s.n >= 4)
+    .sort((a, b) => a.aligned - b.aligned || b.n - a.n);
+  const weakest = candidates[0];
+  if (!weakest) return null;
+
+  let scenario: Scenario;
+  if (weakest.spot.startsWith("pre_")) {
+    const key = weakest.spot.slice(4);
+    scenario = (["btn_open", "sb_open", "bb_defend", "sb_vs_open", "facing_3bet"] as string[]).includes(key)
+      ? key as Scenario : "btn_open";
+  } else if (weakest.spot.includes("3bp") || weakest.spot.includes("facing")) {
+    scenario = "facing_3bet";
+  } else if (weakest.spot.includes("_oop_")) {
+    scenario = "sb_vs_open";
+  } else {
+    scenario = "btn_open";
+  }
+  return { spot: weakest.spot, scenario, aligned: weakest.aligned, n: weakest.n };
 }
 
 const TOUR = "pk_tour_seen";
