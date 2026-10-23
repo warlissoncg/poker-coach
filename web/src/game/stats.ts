@@ -1,7 +1,7 @@
 import { trainingStorage } from "../services/storage/trainingStorage";
 import type { Scenario } from "./drill";
 
-export interface Decision { spot: string; action: string; score: number; deviation: string; ts: number }
+export interface Decision { spot: string; action: string; score: number; deviation: string; ts: number; scenario?: Scenario; stackBB?: number; texture?: string }
 export interface SpotStat { spot: string; n: number; aligned: number; topDeviation: string | null; status: "ok" | "insufficient" | "preliminary" | "likely" }
 
 export function summarize(ds: Decision[]) {
