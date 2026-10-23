@@ -10,7 +10,7 @@ import { TrainView } from "./TrainView";
 
 type View = "train" | "dashboard" | "guide";
 type Theme = "system" | "light" | "dark";
-const NAV: { id: View; icon: string }[] = [{ id: "train", icon: "🃏" }, { id: "dashboard", icon: "📊" }, { id: "guide", icon: "📖" }];
+const NAV: { id: View }[] = [{ id: "train" }, { id: "dashboard" }, { id: "guide" }];
 const sel = "rounded-md border bg-background px-2 py-1 text-sm";
 
 function Shell() {
@@ -46,7 +46,7 @@ function Shell() {
       {tour && <Tour onClose={closeTour} />}
       <aside className="hidden w-56 shrink-0 flex-col gap-1 border-r p-4 md:flex">
         <div className="mb-4 text-lg font-bold">♠ Poker Coach</div>
-        {NAV.map((n) => <Button key={n.id} variant={view === n.id ? "secondary" : "ghost"} className="justify-start" onClick={() => setView(n.id)}>{n.icon} {t(`nav.${n.id}`)}</Button>)}
+        {NAV.map((n) => <Button key={n.id} variant={view === n.id ? "secondary" : "ghost"} className="justify-start" onClick={() => setView(n.id)}>{t(`nav.${n.id}`)}</Button>)}
         <div className="mt-auto flex flex-col gap-2">{controls}<Button variant="outline" size="sm" onClick={() => setTour(true)}>{t("tour.open")}</Button></div>
       </aside>
       <main className="flex-1 p-4 pb-24 md:pb-4">
@@ -56,7 +56,7 @@ function Shell() {
         {view === "guide" && <Guide />}
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        {NAV.map((n) => <button key={n.id} onClick={() => setView(n.id)} className={`flex-1 py-3 text-sm ${view === n.id ? "font-bold text-primary" : "text-muted-foreground"}`}>{n.icon}<br />{t(`nav.${n.id}`)}</button>)}
+        {NAV.map((n) => <button key={n.id} onClick={() => setView(n.id)} className={`flex-1 py-3 text-sm ${view === n.id ? "font-bold text-primary" : "text-muted-foreground"}`}>{t(`nav.${n.id}`)}</button>)}
       </nav>
     </div>
   );

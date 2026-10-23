@@ -24,7 +24,7 @@ export function Table({ hand, reveal }: { hand: HandState; reveal: boolean }) {
   const vil = hand.players.find((p) => p.id === VILLAIN)!;
   const turn = hand.pending[0];
   return (
-    <div className="rounded-2xl bg-emerald-800 p-4 text-white shadow-inner">
+    <div className="rounded-2xl bg-emerald-700 p-4 text-white shadow-inner ring-1 ring-black/10 dark:bg-emerald-950 dark:ring-white/10">
       <style>{"@keyframes deal{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}"}</style>
       <Seat name={`${t("seat.villain")} (${vil.position})`} stack={vil.stack} bet={vil.committed} cards={vil.hole} hidden={!reveal} active={turn === VILLAIN} />
       <div className="my-4 flex flex-col items-center gap-2 rounded-xl bg-black/20 py-3">
