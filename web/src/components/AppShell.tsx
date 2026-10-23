@@ -19,8 +19,12 @@ function Shell() {
   const [theme, setTheme] = useState<Theme>("system");
   const [tour, setTour] = useState(false);
   useEffect(() => {
+    let active = true;
     try { const s = localStorage.getItem("pk_theme"); if (s === "light" || s === "dark" || s === "system") setTheme(s); } catch { /* ignore */ }
-    if (!tourSeen() && loadDecisions().length === 0) setTour(true);
+    void loadDecisions().then((decisions) => {
+      if (active && !tourSeen() && decisions.length === 0) setTour(true);
+    });
+    return () => { active = false; };
   }, []);
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
