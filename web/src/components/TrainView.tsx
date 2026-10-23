@@ -50,7 +50,7 @@ export function TrainView() {
   const act = (a: Action) => {
     const nd = heroAct(drill, a);
     const f = nd.feedback[nd.feedback.length - 1];
-    saveDecision({ spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now() });
+    void saveDecision({ spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now() });
     setScore((s) => ({ sum: s.sum + f.score, n: s.n + 1 }));
     setDrill(nd);
   };
