@@ -58,7 +58,8 @@ function Shell() {
         <div className="mb-3 flex items-center justify-between gap-2 md:hidden"><b>♠ Poker Coach</b><details className="relative"><summary className="cursor-pointer rounded-md border px-3 py-2 text-sm">{t("settings.title")}</summary><div className="absolute right-0 z-20 mt-2 flex min-w-44 flex-col gap-2 rounded-lg border bg-card p-3 shadow-lg">{controls}<Button variant="outline" size="sm" onClick={() => setView("dashboard")}>{t("nav.dashboard")}</Button><Button variant="outline" size="sm" onClick={() => setView("guide")}>{t("nav.guide")}</Button><Button variant="outline" size="sm" onClick={() => setTour(true)}>{t("tour.open")}</Button></div></details></div>
         {view === "train" && <TrainView />}
         {view === "dashboard" && <Dashboard onPractice={() => setView("train")} onReset={() => setTour(true)} />}
-        {view === "stats" && <StatsView />}\n        {view === "guide" && <Guide />}
+        {view === "stats" && <StatsView />}
+        {view === "guide" && <Guide />}
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {NAV.map((n) => <button key={n.id} onClick={() => setView(n.id)} className={`flex-1 py-3 text-sm ${view === n.id ? "font-bold text-primary" : "text-muted-foreground"}`}>{t(`nav.${n.id}`)}</button>)}
