@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Action } from "../engine/hand";
 import { DEFAULT_OPTIONS, SCENARIOS, heroAct, isOver, newDrill, resultBB, type Drill, type DrillOptions, type Feedback } from "../game/drill";
-import { saveDecision } from "../game/stats";
+import { loadDecisions, recommendFocus, saveDecision, type Decision } from "../game/stats";
 import { useI18n } from "../i18n";
 import { ActionBar } from "./ActionBar";
 import { Table } from "./Table";
@@ -37,10 +37,20 @@ export function TrainView() {
   const [opts, setOpts] = useState<DrillOptions>(DEFAULT_OPTIONS);
   const [hands, setHands] = useState(0);
   const [score, setScore] = useState({ sum: 0, n: 0 });
-  useEffect(() => setDrill(newDrill()), []);
+  const [decisions, setDecisions] = useState<Decision[]>([]);
+  const focus = recommendFocus(decisions);
+  useEffect(() => {
+    let active = true;
+    void loadDecisions().then((loaded) => {
+      if (!active) return;
+      setDecisions(loaded);
+      setDrill(newDrill(Math.random, DEFAULT_OPTIONS, recommendFocus(loaded)?.scenario));
+    });
+    return () => { active = false; };
+  }, []);
   const over = drill ? isOver(drill) : false;
-  const next = () => { setDrill(newDrill(undefined, opts)); setHands((h) => h + 1); };
-  const change = (p: Partial<DrillOptions>) => { const o = { ...opts, ...p }; setOpts(o); setDrill(newDrill(undefined, o)); };
+  const next = () => { setDrill(newDrill(Math.random, opts, focus?.scenario)); setHands((h) => h + 1); };
+  const change = (p: Partial<DrillOptions>) => { const o = { ...opts, ...p }; setOpts(o); setDrill(newDrill(Math.random, o, focus?.scenario)); };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (over && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); next(); } };
     window.addEventListener("keydown", onKey);
@@ -50,7 +60,9 @@ export function TrainView() {
   const act = (a: Action) => {
     const nd = heroAct(drill, a);
     const f = nd.feedback[nd.feedback.length - 1];
-    void saveDecision({ spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now() });
+    const decision: Decision = { spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now() };
+    setDecisions((current) => [...current, decision].slice(-2000));
+    void saveDecision(decision);
     setScore((s) => ({ sum: s.sum + f.score, n: s.n + 1 }));
     setDrill(nd);
   };
@@ -65,6 +77,7 @@ export function TrainView() {
         <label className="flex items-center gap-1">{t("ctl.texture")}
           <select className={sel} value={opts.texture} onChange={(e) => change({ texture: e.target.value as DrillOptions["texture"] })}>{TEXES.map((x) => <option key={x} value={x}>{t(`tex.${x}`)}</option>)}</select></label>
       </div>
+      {focus && opts.scenario === "any" && <p className="text-xs text-muted-foreground">{t("focus.recommend", { spot: focus.spot, p: Math.round(focus.aligned * 100), n: focus.n })}</p>}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</span>
         <span>{score.n ? t("session.some", { p: Math.round((score.sum / score.n) * 100), n: score.n }) : t("session.none")}</span>
