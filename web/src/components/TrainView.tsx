@@ -10,15 +10,22 @@ import { Table } from "./Table";
 
 const sel = "rounded-md border bg-background px-2 py-1 text-sm";
 const TEXES = ["any", "dry", "wet", "paired", "mono"] as const;
-const TONE = { good: "border-green-600", ok: "border-yellow-500", miss: "border-orange-600" };
+const TONE = { good: "border-green-600", ok: "border-yellow-500", miss: "border-orange-600", grave: "border-red-600" };
 
 function FeedbackCard({ f }: { f: Feedback }) {
   const { t, spot, why } = useI18n();
-  const alt = f.acceptable.length ? t("fb.alt", { a: f.acceptable.join(", ") }) : "";
+  const v = f.variant % 3;
+  const p = f.preferred.join(" / ");
+  const also = f.acceptable.filter((a) => a !== f.action).join(" / ");
+  const tier = f.why.tier ? t(`tier.${f.why.tier}`) : t("tier.premium");
+  const head = f.verdict === "good" ? `${t(`c.good.${v}`)}${also ? ` ${t("c.also", { a: also })}` : ""}`
+    : f.verdict === "ok" ? t("c.ok", { p, a: f.action })
+    : f.verdict === "miss" ? t(`c.miss.${v}`, { p })
+    : `${t(`c.grave.${v}`)} ${t(`bad.${f.bad}`, { tier })}`;
   return (
     <div className={`rounded-lg border-l-4 bg-card p-3 text-sm shadow-sm ${TONE[f.verdict]}`}>
-      <div className="font-semibold">{t(`v.${f.verdict}`)} · {spot(f.spot)}</div>
-      <div>{t("fb.line", { a: f.action, p: f.preferred.join(" / "), alt })}</div>
+      <div className="text-xs text-muted-foreground">{spot(f.spot)}</div>
+      <div className="font-semibold">{head}</div>
       <div className="mt-1 text-muted-foreground">{why(f.why)}</div>
     </div>
   );
@@ -52,14 +59,14 @@ export function TrainView() {
     <div className="mx-auto max-w-5xl space-y-3">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <label className="flex items-center gap-1">{t("ctl.scenario")}
-          <select className={sel} value={opts.scenario} onChange={(e) => change({ scenario: e.target.value as DrillOptions["scenario"] })}>{SCENARIOS.map((x) => <option key={x} value={x}>{t(`sc.${x}`)}</option>)}</select></label>
+          <select className={sel} value={opts.scenario} onChange={(e) => change({ scenario: e.target.value as DrillOptions["scenario"] })}>{(["any", ...SCENARIOS] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : t(`sc.${x}`)}</option>)}</select></label>
         <label className="flex items-center gap-1">{t("ctl.stack")}
-          <select className={sel} value={opts.stackBB} onChange={(e) => change({ stackBB: +e.target.value })}>{[40, 100, 200].map((x) => <option key={x} value={x}>{x}bb</option>)}</select></label>
+          <select className={sel} value={opts.stackBB} onChange={(e) => change({ stackBB: e.target.value === "any" ? "any" : +e.target.value })}>{(["any", 40, 100, 200] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : `${x}bb`}</option>)}</select></label>
         <label className="flex items-center gap-1">{t("ctl.texture")}
           <select className={sel} value={opts.texture} onChange={(e) => change({ texture: e.target.value as DrillOptions["texture"] })}>{TEXES.map((x) => <option key={x} value={x}>{t(`tex.${x}`)}</option>)}</select></label>
       </div>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>{t("hand", { n: hands + 1, sc: t(`sc.${opts.scenario}`), st: opts.stackBB })}</span>
+        <span>{t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</span>
         <span>{score.n ? t("session.some", { p: Math.round((score.sum / score.n) * 100), n: score.n }) : t("session.none")}</span>
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -79,8 +86,8 @@ export function TrainView() {
             <ul className="mt-2 space-y-0.5 text-muted-foreground">{drill.log.map((l, i) => <li key={i}>{line(l)}</li>)}</ul>
             <div className="mt-3 space-y-2">{drill.feedback.slice(0, -1).map((f, i) => <FeedbackCard key={i} f={f} />)}</div>
           </details>
-          <p className="text-xs text-muted-foreground">{t("compass.note")}</p>
-          {opts.stackBB !== 100 && <p className="text-xs text-muted-foreground">{t("ctl.note")}</p>}
+          <p className="text-xs text-muted-foreground">{t("coach.note")}</p>
+          {drill.stackBB !== 100 && <p className="text-xs text-muted-foreground">{t("ctl.note")}</p>}
           <p className="text-xs text-muted-foreground">{t("keys")}</p>
         </div>
       </div>

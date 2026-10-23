@@ -4,34 +4,48 @@ import { HERO, VILLAIN, bb } from "../game/drill";
 import { useI18n } from "../i18n";
 import { PlayingCard } from "./PlayingCard";
 
-function Seat({ name, stack, bet, cards, hidden, active }: { name: string; stack: number; bet: number; cards: HandState["players"][0]["hole"]; hidden: boolean; active: boolean }) {
-  const { t } = useI18n();
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex gap-1">{cards.map((c, i) => <PlayingCard key={`${name}${i}${c.rank}${c.suit}`} card={c} hidden={hidden} />)}</div>
-      <div className="text-right text-sm">
-        <div className={`font-semibold ${active ? "text-amber-300" : ""}`}>{name}</div>
-        <div className="opacity-80">{t("stack")} {bb(stack)}</div>
-        {bet > 0 && <div className="mt-0.5 rounded-full bg-black/30 px-2 py-0.5 text-xs">{t("bet")} {bb(bet)}</div>}
-      </div>
-    </div>
-  );
-}
+const ORDER = ["SB", "BB", "UTG", "HJ", "CO", "BTN"]; // clockwise around a 6-max table
 
 export function Table({ hand, reveal }: { hand: HandState; reveal: boolean }) {
   const { t } = useI18n();
   const hero = hand.players.find((p) => p.id === HERO)!;
   const vil = hand.players.find((p) => p.id === VILLAIN)!;
   const turn = hand.pending[0];
+  const h = ORDER.indexOf(hero.position);
+  // The hero always sits at the bottom; other seats follow clockwise.
+  const at = (pos: string) => {
+    const a = (((ORDER.indexOf(pos) - h + 6) % 6) * Math.PI) / 3;
+    return { x: 50 - 44 * Math.sin(a), y: 50 + 40 * Math.cos(a) };
+  };
+  const toward = (pt: { x: number; y: number }, k: number) => ({ left: `${50 + (pt.x - 50) * k}%`, top: `${50 + (pt.y - 50) * k}%` });
+  const btn = at("BTN");
   return (
-    <div className="rounded-2xl bg-emerald-700 p-4 text-white shadow-inner ring-1 ring-black/10 dark:bg-emerald-950 dark:ring-white/10">
-      <style>{"@keyframes deal{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}"}</style>
-      <Seat name={`${t("seat.villain")} (${vil.position})`} stack={vil.stack} bet={vil.committed} cards={vil.hole} hidden={!reveal} active={turn === VILLAIN} />
-      <div className="my-4 flex flex-col items-center gap-2 rounded-xl bg-black/20 py-3">
-        <div className="flex gap-1.5">{[0, 1, 2, 3, 4].map((i) => <PlayingCard key={`b${i}${hand.board[i]?.rank}${hand.board[i]?.suit}`} card={hand.board[i]} />)}</div>
-        <div className="text-sm font-medium">{t("pot")} {bb(potSize(hand))}</div>
+    <div className="pb-6">
+      <div className="relative mx-auto aspect-[16/11] w-full max-w-3xl select-none">
+        <style>{"@keyframes deal{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}"}</style>
+        <div className="absolute inset-x-[7%] inset-y-[13%] rounded-[50%] border-[6px] border-amber-900/70 bg-emerald-700 shadow-inner ring-1 ring-black/20 dark:border-amber-950 dark:bg-emerald-950" />
+        <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 text-white">
+          <div className="rounded-full bg-black/40 px-3 py-0.5 text-xs font-medium">{t("pot")} {bb(potSize(hand))}</div>
+          <div className="flex gap-1">{[0, 1, 2, 3, 4].map((i) => <PlayingCard key={`b${i}${hand.board[i]?.rank}${hand.board[i]?.suit}`} card={hand.board[i]} small />)}</div>
+        </div>
+        {ORDER.map((pos) => {
+          const p = pos === hero.position ? hero : pos === vil.position ? vil : null;
+          const pt = at(pos);
+          return (
+            <div key={pos}>
+              <div className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1" style={{ left: `${pt.x}%`, top: `${pt.y}%` }}>
+                {p && <div className="flex gap-0.5">{p.hole.map((c, i) => <PlayingCard key={`${pos}${i}${c.rank}${c.suit}`} card={c} hidden={p === vil && !reveal} small={p !== hero} />)}</div>}
+                <div title={t(`gl.${pos}`)} className={`rounded-lg px-2 py-1 text-center text-xs leading-tight text-white ${p ? `bg-black/70 ring-1 ${turn === p.id ? "ring-amber-400" : "ring-white/20"}` : "bg-black/35 text-white/70"}`}>
+                  <div className="font-bold">{pos}{p ? ` · ${p === hero ? t("seat.you") : t("seat.villain")}` : ""}</div>
+                  {p && <div>{bb(p.stack)}</div>}
+                </div>
+              </div>
+              {p && p.committed > 0 && <div className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white" style={toward(pt, 0.6)}>{bb(p.committed)}</div>}
+            </div>
+          );
+        })}
+        <div className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black shadow" style={toward(btn, 0.8)} title={t("gl.BTN")}>D</div>
       </div>
-      <Seat name={`${t("seat.you")} (${hero.position})`} stack={hero.stack} bet={hero.committed} cards={hero.hole} hidden={false} active={turn === HERO} />
     </div>
   );
 }

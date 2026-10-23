@@ -17,12 +17,12 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
   const clamp = (x: number) => (range ? Math.max(range.min, Math.min(range.max, Math.round(x / 10) * 10)) : 0);
   const presets = !range ? [] : [
     ...(hand.street === "preflop"
-      ? hand.currentBet > hand.bb ? [2.2, 3, 4].map((m) => ({ label: `${m}x`, to: hand.currentBet * m })) : [{ label: "2.5bb", to: 250 }, { label: "3bb", to: 300 }]
+      ? hand.currentBet > hand.bb ? [2.2, 3, 4].map((m) => ({ label: `${m}x`, to: hand.currentBet * m })) : [{ label: "2bb", to: 200 }, { label: "2.5bb", to: 250 }, { label: "3bb", to: 300 }]
       : [33, 66, 100].map((p) => ({ label: `${p}%`, to: kind === "bet" ? (pot * p) / 100 : hand.currentBet + ((pot + (legal?.call ?? 0)) * p) / 100 }))
     ).map((x) => ({ label: x.label, to: clamp(x.to) })),
     { label: t("a.allin"), to: range.max },
   ];
-  const to = range ? (size >= range.min && size <= range.max ? size : presets[Math.min(1, presets.length - 1)].to) : 0;
+  const to = range ? (size >= range.min && size <= range.max ? size : clamp(200)) : 0; // default size: 2bb, kept inside the legal range
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

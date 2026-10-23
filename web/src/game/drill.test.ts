@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { textureOf } from "../engine/analysis";
 import { legalActions, netResults, type Action } from "../engine/hand";
+import { chenScore } from "../engine/analysis";
 import { HERO, SCENARIOS, heroAct, isOver, newDrill } from "./drill";
 import { summarize } from "./stats";
 
@@ -54,6 +55,31 @@ describe("drill flow", () => {
       const d = newDrill(mulberry(3), { texture });
       expect(textureOf(d.hand.boardRunout)).toBe(texture);
     }
+  });
+});
+
+describe("coach feedback", () => {
+  const heroChen = (seed: number, scenario: "btn_open" | "sb_open") => { const d = newDrill(mulberry(seed), { scenario }); return { d, c: chenScore(d.hand.players.find((p) => p.id === HERO)!.hole) }; };
+  it("treats folding a playable hand as a grave error when nobody bet", () => {
+    for (let seed = 1; seed < 400; seed++) {
+      const { d, c } = heroChen(seed, "sb_open");
+      if (c < 6) continue;
+      expect(heroAct(d, { type: "fold" }, mulberry(1)).feedback[0].verdict).toBe("grave");
+      return;
+    }
+  });
+  it("accepts folding trash on the button and praises the exact play", () => {
+    for (let seed = 1; seed < 400; seed++) {
+      const { d, c } = heroChen(seed, "btn_open");
+      if (c > 2) continue;
+      expect(heroAct(d, { type: "fold" }, mulberry(1)).feedback[0].verdict).toBe("good");
+      return;
+    }
+  });
+  it("resolves the Any option for spot and stack", () => {
+    const seen = new Set<string>();
+    for (let seed = 1; seed < 60; seed++) { const d = newDrill(mulberry(seed), { scenario: "any", stackBB: "any" }); seen.add(d.scenario); expect([40, 100, 200].includes(d.stackBB)).toBe(true); }
+    expect(seen.size > 1).toBe(true);
   });
 });
 
