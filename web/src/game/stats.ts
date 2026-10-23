@@ -1,3 +1,5 @@
+import { trainingStorage } from "../services/storage/trainingStorage";
+
 export interface Decision { spot: string; action: string; score: number; deviation: string; ts: number }
 export interface SpotStat { spot: string; n: number; aligned: number; topDeviation: string | null; status: "ok" | "insufficient" | "preliminary" | "likely" }
 
@@ -16,16 +18,17 @@ export function summarize(ds: Decision[]) {
   return { total: ds.length, aligned: ds.length ? ds.reduce((s, d) => s + d.score, 0) / ds.length : 0, spots };
 }
 
-const KEY = "pk_decisions_v4";
 const TOUR = "pk_tour_seen";
-export function loadDecisions(): Decision[] {
-  try { return JSON.parse(localStorage.getItem(KEY) ?? "[]"); } catch { return []; }
+
+/** Async API so local and future remote storage can share the same UI contract. */
+export function loadDecisions(): Promise<Decision[]> {
+  return trainingStorage.loadDecisions();
 }
-export function saveDecision(d: Decision) {
-  try { localStorage.setItem(KEY, JSON.stringify([...loadDecisions(), d].slice(-2000))); } catch { /* storage unavailable */ }
+export function saveDecision(d: Decision): Promise<void> {
+  return trainingStorage.saveDecision(d);
 }
-export function clearDecisions() {
-  try { localStorage.removeItem(KEY); localStorage.removeItem(TOUR); } catch { /* ignore */ }
+export function clearDecisions(): Promise<void> {
+  return trainingStorage.clearDecisions();
 }
 export function tourSeen(): boolean {
   try { return localStorage.getItem(TOUR) === "1"; } catch { return true; }
