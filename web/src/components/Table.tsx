@@ -27,7 +27,7 @@ export function Table({ hand, reveal }: { hand: HandState; reveal: boolean }) {
         <div className="absolute inset-x-[7%] inset-y-[13%] rounded-[50%] border-[6px] border-amber-900/70 bg-emerald-700 shadow-inner ring-1 ring-black/20 dark:border-amber-950 dark:bg-emerald-950" />
         <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 text-white">
           <div key={potSize(hand)} className="pot-readout rounded-full bg-black/50 px-3 py-1 text-xs font-semibold shadow-lg ring-1 ring-white/15">{t("pot")} {bb(potSize(hand))}</div>
-          {potSize(hand) > 0 && <div key={`pot-chips-${potSize(hand)}`} className="flex h-3 items-end justify-center gap-0.5 opacity-90" aria-hidden="true">{Array.from({ length: Math.min(7, Math.max(2, Math.ceil(potSize(hand) / 500))) }, (_, i) => <span key={i} className={`h-2 w-3 rounded-full border border-white/70 shadow ${["bg-red-600","bg-sky-600","bg-amber-500"][i % 3]}`} style={{ transform: `translateY(${i % 2 ? 1 : 0}px)` }} />)}</div>
+          {potSize(hand) > 0 && <div key={`pot-chips-${potSize(hand)}`} className="flex h-3 items-end justify-center gap-0.5 opacity-90" aria-hidden="true">{Array.from({ length: Math.min(7, Math.max(2, Math.ceil(potSize(hand) / 500))) }, (_, i) => <span key={i} className={`h-2 w-3 rounded-full border border-white/70 shadow ${["bg-red-600","bg-sky-600","bg-amber-500"][i % 3]}`} style={{ transform: `translateY(${i % 2 ? 1 : 0}px)` }} />)}</div>}
           <div className="flex gap-1">{[0, 1, 2, 3, 4].map((i) => <PlayingCard key={`b${i}${hand.board[i]?.rank}${hand.board[i]?.suit}`} card={hand.board[i]} small />)}</div>
         </div>
         {ORDER.map((pos) => {
