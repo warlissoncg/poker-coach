@@ -7,10 +7,11 @@ import { Dashboard } from "./Dashboard";
 import { Guide } from "./Guide";
 import { Tour } from "./Tour";
 import { TrainView } from "./TrainView";
+import { StatsView } from "./StatsView";
 
-type View = "train" | "dashboard" | "guide";
+type View = "train" | "dashboard" | "stats" | "guide";
 type Theme = "system" | "light" | "dark";
-const NAV: { id: View }[] = [{ id: "train" }, { id: "dashboard" }, { id: "guide" }];
+const NAV: { id: View }[] = [{ id: "train" }, { id: "dashboard" }, { id: "stats" }, { id: "guide" }];
 const sel = "rounded-md border bg-background px-2 py-1 text-sm";
 
 function Shell() {
@@ -51,13 +52,13 @@ function Shell() {
       <aside className="hidden w-56 shrink-0 flex-col gap-1 border-r p-4 md:flex">
         <div className="mb-4 text-lg font-bold">♠ Poker Coach</div>
         {NAV.map((n) => <Button key={n.id} variant={view === n.id ? "secondary" : "ghost"} className="justify-start" onClick={() => setView(n.id)}>{t(`nav.${n.id}`)}</Button>)}
-        <div className="mt-auto flex flex-col gap-2">{controls}<Button variant="outline" size="sm" onClick={() => setTour(true)}>{t("tour.open")}</Button></div>
+        <div className="mt-auto"><details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm font-medium">{t("settings.title")}</summary><div className="mt-3 flex flex-col gap-2">{controls}<Button variant="outline" size="sm" onClick={() => setTour(true)}>{t("tour.open")}</Button></div></details></div>
       </aside>
       <main className="flex-1 p-4 pb-24 md:pb-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 md:hidden"><b>♠ Poker Coach</b><div className="flex gap-2">{controls}</div></div>
+        <div className="mb-3 flex items-center justify-between gap-2 md:hidden"><b>♠ Poker Coach</b><details className="relative"><summary className="cursor-pointer rounded-md border px-3 py-2 text-sm">{t("settings.title")}</summary><div className="absolute right-0 z-20 mt-2 flex min-w-44 flex-col gap-2 rounded-lg border bg-card p-3 shadow-lg">{controls}<Button variant="outline" size="sm" onClick={() => setTour(true)}>{t("tour.open")}</Button></div></details></div>
         {view === "train" && <TrainView />}
         {view === "dashboard" && <Dashboard onPractice={() => setView("train")} onReset={() => setTour(true)} />}
-        {view === "guide" && <Guide />}
+        {view === "stats" && <StatsView />}\n        {view === "guide" && <Guide />}
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {NAV.map((n) => <button key={n.id} onClick={() => setView(n.id)} className={`flex-1 py-3 text-sm ${view === n.id ? "font-bold text-primary" : "text-muted-foreground"}`}>{t(`nav.${n.id}`)}</button>)}
