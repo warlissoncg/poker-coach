@@ -4,7 +4,7 @@ import { bb, type Feedback, type LogEntry } from "./game/drill";
 
 export type Lang = "pt" | "en";
 const PT: Record<string, string> = {
-  "nav.train": "Treino", "nav.dashboard": "Painel", "nav.guide": "Guia", "tour.open": "Rever tour",
+  "nav.train": "Treino", "nav.dashboard": "Painel", "nav.stats": "Estatísticas", "nav.guide": "Guia", "tour.open": "Rever tour",
   "theme.system": "Tema: sistema", "theme.light": "Tema: claro", "theme.dark": "Tema: escuro",
   "seat.villain": "Vilão", "seat.you": "Você", "pot": "Pot", "stack": "Stack", "bet": "Aposta",
   "a.fold": "Fold", "a.check": "Check", "a.call": "Pagar {n}", "a.bet": "Apostar {n}", "a.raise": "Aumentar para {n}", "a.allin": "All-in", "size": "Tamanho da aposta",
@@ -41,7 +41,7 @@ const PT: Record<string, string> = {
   "spot.pre_btn_open": "Pré-flop: BTN abre", "spot.pre_sb_open": "Pré-flop: SB vs BB", "spot.pre_bb_defend": "Pré-flop: BB defende vs BTN", "spot.pre_sb_vs_open": "Pré-flop: SB vs open do BTN", "spot.pre_facing_3bet": "Pré-flop: enfrentando 3-bet",
   "pos.ip": "em posição", "pos.oop": "fora de posição", "pot.srp": "pot simples", "pot.3bp": "pot 3-bet",
   "sc.btn_open": "BTN abre (RFI)", "sc.sb_open": "SB vs BB (blind battle)", "sc.bb_defend": "BB defende vs BTN", "sc.sb_vs_open": "SB vs open do BTN", "sc.facing_3bet": "BTN enfrentando 3-bet",
-  "ctl.scenario": "Spot", "ctl.stack": "Stack", "ctl.texture": "Flop", "tex.any": "Qualquer", "focus.recommend": "Foco sugerido pelos seus resultados: {spot} ({p}% de alinhamento em {n} decisões). Com Spot em Qualquer, o treino prioriza esse tipo de situação.", "ctl.note": "Minhas faixas foram pensadas pra 100bb. Em outros stacks, use como referência aproximada.",
+  "ctl.scenario": "Spot", "ctl.stack": "Stack", "ctl.texture": "Flop", "tex.any": "Qualquer", "focus.recommend": "Ponto fraco sugerido: {spot} ({p}% de alinhamento em {n} decisões).", "focus.toggle": "Priorizar meus pontos fracos (opcional)", "progress.hands": "Mãos iniciadas nesta sessão: {n}", "progress.spot": "Este spot: {n}/{goal} decisões · {p}%", "progress.spot.label": "Progresso de amostra para estatísticas", "bb.unit": "BB", "stats.title": "Estatísticas por spot", "stats.note": "Filtre pelo mesmo spot, stack e textura usados no treino. O gráfico mostra apenas decisões compatíveis com esses critérios.", "stats.flip": "Virar para estatísticas", "stats.back": "Voltar à mesa", "stats.sample": "{n} decisões · {p}% de alinhamento", "stats.empty": "Ainda não há decisões para esta combinação de filtros.", "stats.filter.spot": "Spot", "stats.filter.stack": "Stack", "stats.filter.texture": "Flop", "ctl.note": "Minhas faixas foram pensadas pra 100bb. Em outros stacks, use como referência aproximada.",
   "coach.note": "O coach lê cada decisão com experiência de mesa: força da mão, textura do board, posição e pot odds. Não é solver.",
   "g.use.1": "Joga umas mãos.",
   "g.use.2": "Aprenda com o feedback e a experiência do coach.",
@@ -79,7 +79,7 @@ const PT: Record<string, string> = {
   "gl.equity": "Equity — Sua chance de ganhar o pot se todas as cartas fossem abertas.",
 };
 const EN: Record<string, string> = {
-  "nav.train": "Training", "nav.dashboard": "Dashboard", "nav.guide": "Guide", "tour.open": "Replay tour",
+  "nav.train": "Training", "nav.dashboard": "Dashboard", "nav.stats": "Statistics", "nav.guide": "Guide", "tour.open": "Replay tour",
   "theme.system": "Theme: system", "theme.light": "Theme: light", "theme.dark": "Theme: dark",
   "seat.villain": "Villain", "seat.you": "You", "pot": "Pot", "stack": "Stack", "bet": "Bet",
   "a.fold": "Fold", "a.check": "Check", "a.call": "Call {n}", "a.bet": "Bet {n}", "a.raise": "Raise to {n}", "a.allin": "All-in", "size": "Bet size",
@@ -116,7 +116,7 @@ const EN: Record<string, string> = {
   "spot.pre_btn_open": "Pre-flop: BTN open", "spot.pre_sb_open": "Pre-flop: SB vs BB", "spot.pre_bb_defend": "Pre-flop: BB defends vs BTN", "spot.pre_sb_vs_open": "Pre-flop: SB vs BTN open", "spot.pre_facing_3bet": "Pre-flop: facing a 3-bet",
   "pos.ip": "in position", "pos.oop": "out of position", "pot.srp": "single-raised pot", "pot.3bp": "3-bet pot",
   "sc.btn_open": "BTN open (RFI)", "sc.sb_open": "SB vs BB (blind battle)", "sc.bb_defend": "BB defends vs BTN", "sc.sb_vs_open": "SB vs BTN open", "sc.facing_3bet": "BTN facing a 3-bet",
-  "ctl.scenario": "Spot", "ctl.stack": "Stack", "ctl.texture": "Flop", "tex.any": "Any", "focus.recommend": "Suggested from your results: {spot} ({p}% alignment across {n} decisions). With Spot set to Any, training prioritizes this type of situation.", "ctl.note": "My ranges are built for 100bb. At other stacks, treat them as a rough guide.",
+  "ctl.scenario": "Spot", "ctl.stack": "Stack", "ctl.texture": "Flop", "tex.any": "Any", "focus.recommend": "Suggested weak spot: {spot} ({p}% alignment across {n} decisions).", "focus.toggle": "Prioritize my weak spots (optional)", "progress.hands": "Hands started this session: {n}", "progress.spot": "This spot: {n}/{goal} decisions · {p}%", "progress.spot.label": "Statistics sample progress", "bb.unit": "BB", "stats.title": "Statistics by spot", "stats.note": "Filter by the same spot, stack and texture used in training. The chart only shows decisions matching these criteria.", "stats.flip": "Flip to statistics", "stats.back": "Back to table", "stats.sample": "{n} decisions · {p}% alignment", "stats.empty": "No decisions yet for this filter combination.", "stats.filter.spot": "Spot", "stats.filter.stack": "Stack", "stats.filter.texture": "Flop", "ctl.note": "My ranges are built for 100bb. At other stacks, treat them as a rough guide.",
   "coach.note": "The coach reads each decision with table experience: hand strength, board texture, position and pot odds. Not a solver.",
   "g.use.1": "Play a few hands.",
   "g.use.2": "Learn from the coach's feedback and experience.",
