@@ -7,7 +7,11 @@ import { useI18n } from "../i18n";
 export function Dashboard({ onPractice, onReset }: { onPractice: () => void; onReset: () => void }) {
   const { t, spot } = useI18n();
   const [s, setS] = useState<ReturnType<typeof summarize> | null>(null);
-  useEffect(() => setS(summarize(loadDecisions())), []);
+  useEffect(() => {
+    let active = true;
+    void loadDecisions().then((decisions) => { if (active) setS(summarize(decisions)); });
+    return () => { active = false; };
+  }, []);
   if (!s) return null;
   const leaks = s.spots.filter((x) => x.status === "preliminary" || x.status === "likely");
   return (
@@ -31,7 +35,7 @@ export function Dashboard({ onPractice, onReset }: { onPractice: () => void; onR
           </tbody>
         </table>
       </div>
-      <Button variant="outline" size="sm" onClick={() => { if (confirm(t("confirm"))) { clearDecisions(); setS(summarize([])); onReset(); } }}>{t("reset")}</Button>
+      <Button variant="outline" size="sm" onClick={() => { if (confirm(t("confirm"))) { void clearDecisions().then(() => setS(summarize([]))); onReset(); } }}>{t("reset")}</Button>
     </div>
   );
 }
