@@ -63,7 +63,7 @@ export function TrainView() {
   const act = (a: Action) => {
     const nd = heroAct(drill, a);
     const f = nd.feedback[nd.feedback.length - 1];
-    const decision: Decision = { spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now(), scenario: drill.scenario, stackBB: drill.stackBB, texture: textureOf(drill.hand.board) };
+    const decision: Decision = { spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now(), scenario: drill.scenario, stackBB: drill.stackBB, texture: textureOf(drill.hand.boardRunout.slice(0, 3)) };
     setDecisions((current) => [...current, decision].slice(-2000));
     void saveDecision(decision);
     setScore((s) => ({ sum: s.sum + f.score, n: s.n + 1 }));
