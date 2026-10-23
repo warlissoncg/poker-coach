@@ -77,7 +77,7 @@ export function TrainView() {
         <label className="flex items-center gap-1">{t("ctl.texture")}
           <select className={sel} value={opts.texture} onChange={(e) => change({ texture: e.target.value as DrillOptions["texture"] })}>{TEXES.map((x) => <option key={x} value={x}>{t(`tex.${x}`)}</option>)}</select></label>
       </div>
-      {focus && opts.scenario === "any" && <p className="text-xs text-muted-foreground">{t("focus.recommend", { spot: focus.spot, p: Math.round(focus.aligned * 100), n: focus.n })}</p>}
+      {focus && opts.scenario === "any" && <p className="text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</p>}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</span>
         <span>{score.n ? t("session.some", { p: Math.round((score.sum / score.n) * 100), n: score.n }) : t("session.none")}</span>
