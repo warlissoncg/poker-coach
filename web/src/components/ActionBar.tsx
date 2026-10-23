@@ -40,7 +40,7 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
       if (k === "f" && legal.fold) onAct({ type: "fold" });
       else if (k === "c") { if (legal.check) onAct({ type: "check" }); else if (legal.call !== null) onAct({ type: "call" }); }
       else if ((k === "b" || k === "r") && range) onAct({ type: kind, to });
-      else if (/^[1-4]$/.test(k) && presets[+k - 1]) setSize(presets[+k - 1].to);
+      else if (/^[1-4]$/.test(k) && presets[+k - 1]) { setSize(presets[+k - 1].to); setSizeText(""); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -58,7 +58,7 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
       {range && range.max > range.min && (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            {presets.map((p, i) => <Button key={p.label} size="sm" variant={p.to === to ? "default" : "outline"} onClick={() => setSize(p.to)}>{p.label} <span className="ml-1 text-xs opacity-60">{i + 1}</span></Button>)}
+            {presets.map((p, i) => <Button key={p.label} size="sm" variant={p.to === to ? "default" : "outline"} onClick={() => { setSize(p.to); setSizeText(""); }}>{p.label} <span className="ml-1 text-xs opacity-60">{i + 1}</span></Button>)}
           </div>
           <label className="flex max-w-xs items-center gap-2 text-sm">
             <span>{t("size")} ({t("bb.unit")})</span>
