@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Action } from "../engine/hand";
+import { textureOf } from "../engine/analysis";
 import { DEFAULT_OPTIONS, SCENARIOS, heroAct, isOver, newDrill, resultBB, type Drill, type DrillOptions, type Feedback } from "../game/drill";
 import { loadDecisions, recommendFocus, saveDecision, type Decision } from "../game/stats";
 import { useI18n } from "../i18n";
@@ -38,19 +39,20 @@ export function TrainView() {
   const [hands, setHands] = useState(0);
   const [score, setScore] = useState({ sum: 0, n: 0 });
   const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [focusEnabled, setFocusEnabled] = useState(false);
   const focus = recommendFocus(decisions);
   useEffect(() => {
     let active = true;
     void loadDecisions().then((loaded) => {
       if (!active) return;
       setDecisions(loaded);
-      setDrill(newDrill(Math.random, DEFAULT_OPTIONS, recommendFocus(loaded)?.scenario));
+      setDrill(newDrill(Math.random, DEFAULT_OPTIONS));
     });
     return () => { active = false; };
   }, []);
   const over = drill ? isOver(drill) : false;
-  const next = () => { setDrill(newDrill(Math.random, opts, focus?.scenario)); setHands((h) => h + 1); };
-  const change = (p: Partial<DrillOptions>) => { const o = { ...opts, ...p }; setOpts(o); setDrill(newDrill(Math.random, o, focus?.scenario)); };
+  const next = () => { setDrill(newDrill(Math.random, opts, focusEnabled ? focus?.scenario : undefined)); setHands((h) => h + 1); };
+  const change = (p: Partial<DrillOptions>) => { const o = { ...opts, ...p }; setOpts(o); setDrill(newDrill(Math.random, o, focusEnabled ? focus?.scenario : undefined)); };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (over && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); next(); } };
     window.addEventListener("keydown", onKey);
@@ -60,13 +62,16 @@ export function TrainView() {
   const act = (a: Action) => {
     const nd = heroAct(drill, a);
     const f = nd.feedback[nd.feedback.length - 1];
-    const decision: Decision = { spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now() };
+    const decision: Decision = { spot: f.spot, action: f.action, score: f.score, deviation: f.deviation, ts: Date.now(), scenario: drill.scenario, stackBB: drill.stackBB, texture: textureOf(drill.hand.board) };
     setDecisions((current) => [...current, decision].slice(-2000));
     void saveDecision(decision);
     setScore((s) => ({ sum: s.sum + f.score, n: s.n + 1 }));
     setDrill(nd);
   };
   const last = drill.feedback[drill.feedback.length - 1];
+  const currentSpot = last?.spot ?? `pre_${drill.scenario}`;
+  const currentSpotCount = decisions.filter((d) => d.spot === currentSpot).length;
+  const statsProgress = Math.min(100, Math.round((currentSpotCount / 8) * 100));
   return (
     <div className="mx-auto max-w-5xl space-y-3">
       <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -77,7 +82,19 @@ export function TrainView() {
         <label className="flex items-center gap-1">{t("ctl.texture")}
           <select className={sel} value={opts.texture} onChange={(e) => change({ texture: e.target.value as DrillOptions["texture"] })}>{TEXES.map((x) => <option key={x} value={x}>{t(`tex.${x}`)}</option>)}</select></label>
       </div>
-      {focus && opts.scenario === "any" && <p className="text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</p>}
+      <div className="space-y-2 rounded-lg border bg-card p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span>{t("progress.hands", { n: hands })}</span>
+          <span className="text-muted-foreground">{t("progress.spot", { n: currentSpotCount, goal: 8, p: statsProgress })}</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={statsProgress} aria-valuemin={0} aria-valuemax={100} aria-label={t("progress.spot.label")}>
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${statsProgress}%` }} />
+        </div>
+        {focus && opts.scenario === "any" && <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" checked={focusEnabled} onChange={(e) => { setFocusEnabled(e.target.checked); setDrill(newDrill(Math.random, opts, e.target.checked ? focus?.scenario : undefined)); }} />
+          <span><span className="font-medium">{t("focus.toggle")}</span><span className="block text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</span></span>
+        </label>}
+      </div>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</span>
         <span>{score.n ? t("session.some", { p: Math.round((score.sum / score.n) * 100), n: score.n }) : t("session.none")}</span>
