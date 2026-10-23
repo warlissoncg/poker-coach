@@ -6,7 +6,7 @@ export type Rng = () => number;
 export type Scenario = PreflopSpot;
 export const SCENARIOS: Scenario[] = ["btn_open", "sb_open", "bb_defend", "sb_vs_open", "facing_3bet"];
 export interface DrillOptions { scenario: Scenario | "any"; stackBB: number | "any"; texture: Texture | "any" }
-export const DEFAULT_OPTIONS: DrillOptions = { scenario: "btn_open", stackBB: 100, texture: "any" };
+export const DEFAULT_OPTIONS: DrillOptions = { scenario: "any", stackBB: "any", texture: "any" };
 export type Deviation = "" | "tight" | "loose" | "aggressive" | "passive";
 export interface Why { kind: "pre" | "facing" | "bet"; chen?: number; tier?: Tier; tex?: Texture; need?: number }
 export interface Feedback { spot: string; action: string; preferred: string[]; acceptable: string[]; verdict: "good" | "ok" | "miss" | "grave"; score: number; deviation: Deviation; why: Why; variant: number; bad?: "fold_free" | "fold_strong" }
@@ -34,9 +34,11 @@ function entry(x: HandState["history"][number]): LogEntry {
   return { street: x.street, who: x.playerId === HERO ? "you" : "opp", type: a.type, amount: a.type === "raise" ? a.to : a.type === "call" || a.type === "bet" ? x.added : undefined };
 }
 
-export function newDrill(rng: Rng = Math.random, o: Partial<DrillOptions> = {}): Drill {
+export function newDrill(rng: Rng = Math.random, o: Partial<DrillOptions> = {}, preferredScenario?: Scenario): Drill {
   const opts = { ...DEFAULT_OPTIONS, ...o };
-  const scenario = opts.scenario === "any" ? SCENARIOS[Math.floor(rng() * SCENARIOS.length)] : opts.scenario;
+  const scenario = opts.scenario === "any"
+    ? preferredScenario && rng() < 0.7 ? preferredScenario : SCENARIOS[Math.floor(rng() * SCENARIOS.length)]
+    : opts.scenario;
   const stackBB = opts.stackBB === "any" ? [40, 100, 200][Math.floor(rng() * 3)] : opts.stackBB;
   const s = SETUPS[scenario];
   let d = newDeck(rng);
