@@ -33,7 +33,7 @@ function FeedbackCard({ f }: { f: Feedback }) {
 }
 
 export function TrainView() {
-  const { t, line, res } = useI18n();
+  const { t, line, res, spot } = useI18n();
   const [drill, setDrill] = useState<Drill | null>(null);
   const [opts, setOpts] = useState<DrillOptions>(DEFAULT_OPTIONS);
   const [hands, setHands] = useState(0);
