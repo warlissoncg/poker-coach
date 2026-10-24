@@ -14,14 +14,8 @@ export function BrandAvatar({ size = 96, className = "" }: BrandAvatarProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <linearGradient id="hood" x1="30" y1="88" x2="130" y2="155" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#26352D" />
-          <stop offset="1" stopColor="#090D0B" />
-        </linearGradient>
-      </defs>
       <circle cx="80" cy="80" r="77" fill="#0B100F" stroke="#C5F36B" strokeWidth="2" />
-      <path d="M19 142C25 115 43 103 60 99H100C119 105 136 118 141 142L126 151H34L19 142Z" fill="url(#hood)" stroke="#4A5A4D" strokeWidth="2" />
+      <path d="M19 142C25 115 43 103 60 99H100C119 105 136 118 141 142L126 151H34L19 142Z" fill="#17211A" stroke="#4A5A4D" strokeWidth="2" />
       <path d="M49 46C48 27 62 17 82 18C104 18 117 31 116 50L110 69H51L49 46Z" fill="#141A16" stroke="#9AA39A" strokeWidth="2" />
       <path d="M43 43C47 20 65 11 88 14C108 16 120 27 124 42L99 36L68 37L43 43Z" fill="#242B26" stroke="#D7DAD4" strokeWidth="2" />
       <path d="M39 42L124 42L137 50L32 50L39 42Z" fill="#111713" stroke="#C5F36B" strokeWidth="2" />
