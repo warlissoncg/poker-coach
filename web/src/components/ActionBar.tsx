@@ -12,7 +12,8 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
   const kind: "bet" | "raise" = legal?.bet ? "bet" : "raise";
   const pot = potSize(hand);
   const [size, setSize] = useState(0);
-  useEffect(() => setSize(0), [hand.history.length]);
+  const [sizeText, setSizeText] = useState("");
+  useEffect(() => { setSize(0); setSizeText(""); }, [hand.history.length]);
 
   const clamp = (x: number) => (range ? Math.max(range.min, Math.min(range.max, Math.round(x / 10) * 10)) : 0);
   const presets = !range ? [] : [
@@ -22,7 +23,15 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
     ).map((x) => ({ label: x.label, to: clamp(x.to) })),
     { label: t("a.allin"), to: range.max },
   ];
-  const to = range ? (size >= range.min && size <= range.max ? size : clamp(200)) : 0; // default size: 2bb, kept inside the legal range
+  const to = range ? (size >= range.min && size <= range.max ? size : clamp(200)) : 0;
+  const bbText = (chips: number) => (chips / hand.bb).toFixed(1).replace(".", ",");
+  const setFromText = (raw: string) => {
+    setSizeText(raw);
+    const normalized = raw.trim().replace(",", ".");
+    if (!normalized || !/^\d+(\.\d{0,2})?$/.test(normalized)) return;
+    const bbValue = Number(normalized);
+    if (Number.isFinite(bbValue) && range) setSize(clamp(bbValue * hand.bb));
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -31,7 +40,7 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
       if (k === "f" && legal.fold) onAct({ type: "fold" });
       else if (k === "c") { if (legal.check) onAct({ type: "check" }); else if (legal.call !== null) onAct({ type: "call" }); }
       else if ((k === "b" || k === "r") && range) onAct({ type: kind, to });
-      else if (/^[1-4]$/.test(k) && presets[+k - 1]) setSize(presets[+k - 1].to);
+      else if (/^[1-4]$/.test(k) && presets[+k - 1]) { setSize(presets[+k - 1].to); setSizeText(""); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -49,9 +58,19 @@ export function ActionBar({ hand, onAct }: { hand: HandState; onAct: (a: Action)
       {range && range.max > range.min && (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            {presets.map((p, i) => <Button key={p.label} size="sm" variant={p.to === to ? "default" : "outline"} onClick={() => setSize(p.to)}>{p.label} <span className="ml-1 text-xs opacity-60">{i + 1}</span></Button>)}
+            {presets.map((p, i) => <Button key={p.label} size="sm" variant={p.to === to ? "default" : "outline"} onClick={() => { setSize(p.to); setSizeText(""); }}>{p.label} <span className="ml-1 text-xs opacity-60">{i + 1}</span></Button>)}
           </div>
-          <input type="range" className="w-full" min={range.min} max={range.max} step={10} value={to} onChange={(e) => setSize(+e.target.value)} aria-label={t("size")} />
+          <label className="flex max-w-xs items-center gap-2 text-sm">
+            <span>{t("size")} ({t("bb.unit")})</span>
+            <input
+              type="text" inputMode="decimal" value={sizeText || bbText(to)}
+              onChange={(e) => setFromText(e.target.value)}
+              onBlur={() => setSizeText(bbText(to))}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onAct({ type: kind, to }); } }}
+              className="w-24 rounded-md border bg-background px-3 py-2 text-right tabular-nums"
+              aria-label={t("size")}
+            />
+          </label>
         </div>
       )}
     </div>

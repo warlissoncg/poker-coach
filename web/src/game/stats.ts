@@ -1,4 +1,7 @@
-export interface Decision { spot: string; action: string; score: number; deviation: string; ts: number }
+import { trainingStorage } from "../services/storage/trainingStorage";
+import type { Scenario } from "./drill";
+
+export interface Decision { spot: string; action: string; score: number; deviation: string; ts: number; scenario?: Scenario; stackBB?: number; texture?: string }
 export interface SpotStat { spot: string; n: number; aligned: number; topDeviation: string | null; status: "ok" | "insufficient" | "preliminary" | "likely" }
 
 export function summarize(ds: Decision[]) {
@@ -16,16 +19,42 @@ export function summarize(ds: Decision[]) {
   return { total: ds.length, aligned: ds.length ? ds.reduce((s, d) => s + d.score, 0) / ds.length : 0, spots };
 }
 
-const KEY = "pk_decisions_v4";
+export interface RecommendedFocus { spot: string; scenario: Scenario; aligned: number; n: number }
+
+/** Pick the user's least-aligned spot with enough observations and map it to a drill scenario. */
+export function recommendFocus(ds: Decision[]): RecommendedFocus | null {
+  const candidates = summarize(ds).spots
+    .filter((s) => s.n >= 4)
+    .sort((a, b) => a.aligned - b.aligned || b.n - a.n);
+  const weakest = candidates[0];
+  if (!weakest) return null;
+
+  let scenario: Scenario;
+  if (weakest.spot.startsWith("pre_")) {
+    const key = weakest.spot.slice(4);
+    scenario = (["btn_open", "sb_open", "bb_defend", "sb_vs_open", "facing_3bet"] as string[]).includes(key)
+      ? key as Scenario : "btn_open";
+  } else if (weakest.spot.includes("3bp") || weakest.spot.includes("facing")) {
+    scenario = "facing_3bet";
+  } else if (weakest.spot.includes("_oop_")) {
+    scenario = "sb_vs_open";
+  } else {
+    scenario = "btn_open";
+  }
+  return { spot: weakest.spot, scenario, aligned: weakest.aligned, n: weakest.n };
+}
+
 const TOUR = "pk_tour_seen";
-export function loadDecisions(): Decision[] {
-  try { return JSON.parse(localStorage.getItem(KEY) ?? "[]"); } catch { return []; }
+
+/** Async API so local and future remote storage can share the same UI contract. */
+export function loadDecisions(): Promise<Decision[]> {
+  return trainingStorage.loadDecisions();
 }
-export function saveDecision(d: Decision) {
-  try { localStorage.setItem(KEY, JSON.stringify([...loadDecisions(), d].slice(-2000))); } catch { /* storage unavailable */ }
+export function saveDecision(d: Decision): Promise<void> {
+  return trainingStorage.saveDecision(d);
 }
-export function clearDecisions() {
-  try { localStorage.removeItem(KEY); localStorage.removeItem(TOUR); } catch { /* ignore */ }
+export function clearDecisions(): Promise<void> {
+  return trainingStorage.clearDecisions();
 }
 export function tourSeen(): boolean {
   try { return localStorage.getItem(TOUR) === "1"; } catch { return true; }
