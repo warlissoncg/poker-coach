@@ -169,7 +169,6 @@ export function TrainView() {
           <p className="text-xs text-muted-foreground">{t("keys")}</p>
         </div>
       </section>
-      </div>
     </div>
   );
 }
