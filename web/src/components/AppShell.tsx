@@ -54,6 +54,7 @@ function Shell() {
       </label>
       <div className="border-t pt-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ferramentas</div>
+        <Button variant={view === "train" ? "secondary" : "outline"} className="mb-2 w-full justify-start" size="sm" onClick={() => setView("train")}>Voltar ao Treino</Button>
         <Button variant={view === "dashboard" ? "secondary" : "outline"} className="mb-2 w-full justify-start" size="sm" onClick={() => setView("dashboard")}>{t("nav.dashboard")}</Button>
         <Button variant={view === "guide" ? "secondary" : "outline"} className="mb-2 w-full justify-start" size="sm" onClick={() => setView("guide")}>{t("nav.guide")}</Button>
         <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => setTour(true)}>{t("tour.open")}</Button>
@@ -93,7 +94,7 @@ function Shell() {
         )}
       </aside>
 
-      <main className="min-w-0 flex-1 p-3 pb-24 md:p-4 md:pb-4">
+      <main className="min-w-0 flex-1 p-3 pb-24 md:p-4 md:pb-4" style={{ backgroundImage: "repeating-conic-gradient(rgba(100, 116, 139, 0.045) 0% 25%, transparent 0% 50%)", backgroundSize: "32px 32px" }}>
         <div className="mb-3 flex items-center justify-between gap-2 md:hidden">
           <div className="flex items-center gap-2"><BrandAvatar size={34} /><div><b className="block text-sm">Poker Coach</b><span className="text-[10px] uppercase tracking-[0.18em] text-primary">The Grind Lab</span></div></div>
           <Button variant="outline" size="sm" onClick={() => setSidebarOpen((v) => !v)}>{t("settings.title")}</Button>
