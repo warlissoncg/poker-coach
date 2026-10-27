@@ -104,13 +104,6 @@ function Shell() {
         {view === "guide" && <Guide />}
       </main>
 
-      {sidebarOpen && !sidebarPinned && <button className="fixed inset-0 z-20 hidden cursor-default bg-black/10 md:block" aria-label="Fechar painel de configurações" onClick={() => setSidebarOpen(false)} />}
-      {sidebarOpen && !sidebarPinned && <div className="fixed left-12 top-0 z-30 hidden h-screen w-64 border-r bg-background p-4 shadow-xl md:flex md:flex-col">
-        <div className="mb-5 flex items-center gap-3 border-b border-border pb-5"><BrandAvatar size={44} className="shrink-0" /><div><div className="text-sm font-black uppercase tracking-[0.14em]">Poker Coach</div><div className="mt-1 text-[10px] uppercase tracking-[0.18em] text-primary">The Grind Lab</div></div></div>
-        <div className="mb-3 flex items-center justify-between"><span className="text-sm font-semibold">Configurações</span><div className="flex gap-1"><Button variant="secondary" size="icon" aria-label="Fixar painel" onClick={() => setSidebarPinned(true)}>📌</Button><Button variant="ghost" size="icon" aria-label="Fechar painel" onClick={() => setSidebarOpen(false)}>×</Button></div></div>
-        {controls}
-      </div>}
-
       <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <button onClick={() => setView("train")} className={`flex-1 py-3 text-sm ${view === "train" ? "font-bold text-primary" : "text-muted-foreground"}`}>Treino</button>
         <button onClick={() => setView("stats")} className={`flex-1 py-3 text-sm ${view === "stats" ? "font-bold text-primary" : "text-muted-foreground"}`}>Estatísticas</button>
