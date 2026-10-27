@@ -94,14 +94,37 @@ export function TrainView() {
           <span><span className="font-medium">{t("focus.toggle")}</span><span className="block text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</span></span>
         </label>
       </div>}
-      <div className="grid items-stretch gap-4 lg:grid-cols-[76px_minmax(0,1fr)]">
-        <aside className="flex flex-row items-center justify-center gap-3 rounded-xl border bg-card p-3 lg:min-h-[360px] lg:flex-col lg:justify-between" aria-label={t("progress.spot.label")}>
-          <div className="text-center lg:order-1">
+      <div className="grid items-stretch gap-4">
+
+        <div className="min-w-0 space-y-3">
+          <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+            <span>{t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</span>
+            <span className="hidden sm:inline">{showSpotStats ? "ESTATÍSTICA" : "TREINO"}</span>
+          </div>
+
+          <div className="relative h-[560px] overflow-hidden space-y-2 rounded-xl border bg-card p-3 pt-4 sm:p-5">
+            <div className="mb-2 flex items-center justify-between gap-2 border-b pb-2 pr-12">
+              <h2 className="text-sm font-bold uppercase tracking-widest">{showSpotStats ? "Estatística" : "Treino"}</h2>
+              <span className="text-xs text-muted-foreground">{showSpotStats ? "Visão de desempenho" : "Mesa ativa"}</span>
+            </div>
+            <button type="button" onClick={() => setShowSpotStats((v) => !v)} aria-label={showSpotStats ? "Flip Card: voltar para Treino" : "Flip Card: abrir Estatística"} aria-pressed={showSpotStats} className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-amber-500 bg-emerald-950 text-amber-100 shadow-md transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" title="Alternar Treino/Estatísticas">
+              <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true"><path fill="currentColor" d="M13 53 19 43 17 34 22 26 22 18 29 10 38 12 43 19 53 22 48 29 42 29 39 37 34 42 34 53 27 53 27 44 23 44 20 53Z"/><path fill="currentColor" d="M30 14 25 20 31 22 36 19 34 14Z"/><path fill="none" stroke="#d6a84f" strokeWidth="2" d="M8 57H56"/></svg>
+            </button>
+            {showSpotStats ? (
+              <div className="flex h-[470px] flex-col gap-3 p-1">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">{t("stats.byspot")}</div>
+                <h3 className="mt-2 text-lg font-semibold">{spot(currentSpot)}</h3>
+                <div className="my-1 text-4xl font-bold tabular-nums">{currentSpotSummary.total ? `${Math.round(currentSpotSummary.aligned * 100)}%` : "—"}</div>
+                <p className="text-sm text-muted-foreground">{t("stats.sample", { n: currentSpotSummary.total, p: currentSpotSummary.total ? Math.round(currentSpotSummary.aligned * 100) : 0 })}</p>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, currentSpotSummary.total / 8 * 100)}%` }} /></div>
+                <p className="mt-2 text-xs text-muted-foreground">{t("stats.threshold", { n: currentSpotSummary.total, goal: 8 })}</p>
+                <aside className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-2" aria-label={t("progress.spot.label")}>
+          <div className="text-center">
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mãos</div>
             <div className="mt-1 text-lg font-bold tabular-nums">{hands}</div>
           </div>
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-3 lg:order-2 lg:flex-none lg:flex-col">
-            <div className="relative flex h-40 w-8 items-end justify-center rounded-full border-2 border-muted-foreground/50 bg-muted/60 p-1 lg:h-64">
+          <div className="flex items-center justify-center gap-2">
+            <div className="relative flex h-20 w-4 items-end justify-center rounded-full border-2 border-muted-foreground/50 bg-muted/60 p-1 ">
               <div className="absolute -top-2 left-1/2 z-10 h-5 w-5 -translate-x-1/2 rounded-full border-2 border-amber-500 bg-card shadow-sm" title={currentSpotCount >= 8 ? "Amostra mínima atingida" : "Amostra mínima: 8 decisões"} />
               <div className="relative flex h-full w-full items-end overflow-hidden rounded-full">
                 <div className={`w-full rounded-full transition-[height] duration-700 ease-out ${currentSpotCount >= 8 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ height: `${statsProgress}%` }} />
@@ -116,41 +139,18 @@ export function TrainView() {
             <div className={`text-[10px] font-semibold uppercase tracking-wider ${currentSpotCount >= 8 ? "text-emerald-600" : "text-muted-foreground"}`}>{currentSpotCount >= 8 ? "Amostra mínima" : "Coletando dados"}</div>
             <div className="text-[10px] text-muted-foreground">{statsProgress}%</div>
           </div>
-        </aside>
-        <div className="min-w-0 space-y-3">
-          <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-            <span>{t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</span>
-            <span className="hidden sm:inline">{showSpotStats ? "ESTATÍSTICA" : "TREINO"}</span>
-          </div>
-          <div className="flex justify-center">
-            <button type="button" onClick={() => setShowSpotStats((v) => !v)} aria-label={showSpotStats ? "Flip Card: voltar para Treino" : "Flip Card: abrir Estatística"} aria-pressed={showSpotStats} className="group relative flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full border-[5px] border-amber-500 bg-emerald-950 text-center text-[10px] font-black uppercase leading-tight tracking-wider text-amber-100 shadow-[0_5px_0_rgba(0,0,0,0.25)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 active:translate-y-0 active:shadow-sm" title="Flip Card">
-            <span className="pointer-events-none absolute inset-[4px] rounded-full border border-amber-300/70" />
-            <span className="relative max-w-[54px]">FLIP<br />CARD</span>
-          </button>
-          </div>
-          <div className="h-[560px] overflow-y-auto space-y-2 rounded-xl border bg-card p-3 sm:p-5">
-            <div className="mb-3 flex items-center justify-between gap-2 border-b pb-3">
-              <h2 className="text-sm font-bold uppercase tracking-widest">{showSpotStats ? "Estatística" : "Treino"}</h2>
-              <span className="text-xs text-muted-foreground">{showSpotStats ? "Visão de desempenho" : "Mesa ativa"}</span>
-            </div>
-            {showSpotStats ? (
-              <div className="min-h-64 p-1">
-                <div className="text-xs uppercase tracking-widest text-muted-foreground">{t("stats.byspot")}</div>
-                <h3 className="mt-2 text-lg font-semibold">{spot(currentSpot)}</h3>
-                <div className="my-4 text-4xl font-bold tabular-nums">{currentSpotSummary.total ? `${Math.round(currentSpotSummary.aligned * 100)}%` : "—"}</div>
-                <p className="text-sm text-muted-foreground">{t("stats.sample", { n: currentSpotSummary.total, p: currentSpotSummary.total ? Math.round(currentSpotSummary.aligned * 100) : 0 })}</p>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, currentSpotSummary.total / 8 * 100)}%` }} /></div>
-                <p className="mt-3 text-xs text-muted-foreground">{t("stats.threshold", { n: currentSpotSummary.total, goal: 8 })}</p>
+                </aside>
               </div>
             ) : (
               <>
-                <Table hand={drill.hand} reveal={drill.hand.street === "showdown"} />
+                <div className="flex h-[420px] flex-col justify-between gap-2 overflow-hidden"><div className="min-h-0 flex-1 overflow-hidden"><Table hand={drill.hand} reveal={drill.hand.street === "showdown"} /></div>
                 {over ? (
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3">
                     <b>{res(resultBB(drill))}</b>
                     <Button size="lg" onClick={next}>{t("next")} <kbd className="ml-1 text-xs opacity-60">Enter</kbd></Button>
                   </div>
-                ) : <div className="mt-4"><ActionBar hand={drill.hand} onAct={act} /></div>}
+                ) : <div className="shrink-0"><ActionBar hand={drill.hand} onAct={act} /></div>}
+                </div>
               </>
             )}
           </div>
