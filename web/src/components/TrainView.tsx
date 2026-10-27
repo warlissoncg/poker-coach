@@ -75,10 +75,10 @@ export function TrainView() {
   const statsProgress = Math.min(100, Math.round((currentSpotCount / 8) * 100));
   const currentSpotSummary = summarize(decisions.filter((d) => d.spot === currentSpot));
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-4">
-      <section className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 sm:p-4">
+    <div className="mx-auto w-full max-w-6xl space-y-2">
+      <section className="flex flex-wrap items-end gap-2 rounded-xl border bg-card p-2 sm:gap-3 sm:p-3">
         <label className="flex min-w-[150px] flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">{t("ctl.scenario")}
-          <select className={sel + " h-10 w-full"} value={opts.scenario} onChange={(e) => change({ scenario: e.target.value as DrillOptions["scenario"] })}>{(["any", ...SCENARIOS] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : t(`sc.${x}`)}</option>)}</select>
+          <select className={sel + " h-8 w-full"} value={opts.scenario} onChange={(e) => change({ scenario: e.target.value as DrillOptions["scenario"] })}>{(["any", ...SCENARIOS] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : t(`sc.${x}`)}</option>)}</select>
         </label>
         <label className="flex min-w-[110px] flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">{t("ctl.stack")}
           <select className={sel + " h-10 w-full"} value={opts.stackBB} onChange={(e) => change({ stackBB: e.target.value === "any" ? "any" : +e.target.value })}>{(["any", 40, 100, 200] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : `${x}bb`}</option>)}</select>
@@ -86,14 +86,14 @@ export function TrainView() {
         <label className="flex min-w-[140px] flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">{t("ctl.texture")}
           <select className={sel + " h-10 w-full"} value={opts.texture} onChange={(e) => change({ texture: e.target.value as DrillOptions["texture"] })}>{TEXES.map((x) => <option key={x} value={x}>{t(`tex.${x}`)}</option>)}</select>
         </label>
-        <div className="flex min-h-10 flex-1 items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
+        <div className="flex min-h-8 flex-1 items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-1.5 text-xs sm:text-sm">
           <span>{t("progress.hands", { n: hands + 1 })}</span>
           <span className="text-right text-xs text-muted-foreground">{score.n ? t("session.some", { p: Math.round((score.sum / score.n) * 100), n: score.n }) : t("session.none")}</span>
         </div>
       </section>
 
       {focus && opts.scenario === "any" && (
-        <section className="rounded-xl border bg-card px-3 py-2.5">
+        <section className="rounded-xl border bg-card px-3 py-2">
           <label className="flex cursor-pointer items-start gap-2 text-sm">
             <input className="mt-1" type="checkbox" checked={focusEnabled} onChange={(e) => { setFocusEnabled(e.target.checked); setDrill(newDrill(Math.random, opts, e.target.checked ? focus?.scenario : undefined)); }} />
             <span><span className="font-medium">{t("focus.toggle")}</span><span className="block text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</span></span>
@@ -102,7 +102,7 @@ export function TrainView() {
       )}
 
       <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <header className="flex min-h-16 items-center justify-between gap-3 border-b px-4 py-3 pr-16 sm:px-5">
+        <header className="flex min-h-12 items-center justify-between gap-3 border-b px-3 py-2 pr-14 sm:px-4">
           <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">The Grind Lab</div>
             <h2 className="truncate text-base font-bold sm:text-lg">{showSpotStats ? "Estatísticas do spot" : t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</h2>
@@ -110,7 +110,7 @@ export function TrainView() {
           <span className="shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{showSpotStats ? "Desempenho" : "Treino ativo"}</span>
         </header>
 
-        <div className="relative p-3 sm:p-5">
+        <div className="relative p-2 sm:p-3">
           <button type="button" onClick={() => setShowSpotStats((v) => !v)} aria-label={showSpotStats ? "Voltar ao treino" : "Abrir estatísticas"} aria-pressed={showSpotStats} className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-amber-500 bg-emerald-950 text-amber-100 shadow-md transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:right-5 sm:top-4" title={showSpotStats ? "Voltar ao treino" : "Ver estatísticas"}>
             <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true"><path fill="currentColor" d="M13 53 19 43 17 34 22 26 22 18 29 10 38 12 43 19 53 22 48 29 42 29 39 37 34 42 34 53 27 53 27 44 23 44 20 53Z"/><path fill="currentColor" d="M30 14 25 20 31 22 36 19 34 14Z"/><path fill="none" stroke="#d6a84f" strokeWidth="2" d="M8 57H56"/></svg>
           </button>
@@ -148,7 +148,7 @@ export function TrainView() {
                   <b>{res(resultBB(drill))}</b>
                   <Button size="lg" onClick={next}>{t("next")} <kbd className="ml-1 text-xs opacity-60">Enter</kbd></Button>
                 </div>
-              ) : <div className="rounded-xl border bg-muted/20 p-3 sm:p-4"><ActionBar hand={drill.hand} onAct={act} /></div>}
+              ) : <div className="rounded-xl border bg-muted/20 p-2 sm:p-3"><ActionBar hand={drill.hand} onAct={act} /></div>}
             </div>
           )}
         </div>
