@@ -128,7 +128,7 @@ export function TrainView() {
             <span className="relative max-w-[54px]">FLIP<br />CARD</span>
           </button>
           </div>
-          <div className="space-y-2 rounded-xl border bg-card p-3 sm:p-5">
+          <div className="h-[560px] overflow-y-auto space-y-2 rounded-xl border bg-card p-3 sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-2 border-b pb-3">
               <h2 className="text-sm font-bold uppercase tracking-widest">{showSpotStats ? "Estatística" : "Treino"}</h2>
               <span className="text-xs text-muted-foreground">{showSpotStats ? "Visão de desempenho" : "Mesa ativa"}</span>
