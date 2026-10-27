@@ -24,7 +24,7 @@ export interface RecommendedFocus { spot: string; scenario: Scenario; aligned: n
 /** Pick the user's least-aligned spot with enough observations and map it to a drill scenario. */
 export function recommendFocus(ds: Decision[]): RecommendedFocus | null {
   const candidates = summarize(ds).spots
-    .filter((s) => s.n >= 4)
+    .filter((s) => s.n >= 8)
     .sort((a, b) => a.aligned - b.aligned || b.n - a.n);
   const weakest = candidates[0];
   if (!weakest) return null;
