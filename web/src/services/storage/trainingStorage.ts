@@ -41,8 +41,9 @@ export const localTrainingStorage: TrainingStorage = {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(DECISIONS_KEY, JSON.stringify([...readLocal(), decision].slice(-MAX_DECISIONS)));
-    } catch {
-      // Keep the drill usable when browser storage is unavailable or full.
+    } catch (error) {
+      // Do not silently report a successful save when browser storage fails.
+      throw new Error("Não foi possível salvar seu histórico neste navegador. Libere espaço ou verifique as permissões de armazenamento e tente novamente.", { cause: error });
     }
   },
   async clearDecisions() {
