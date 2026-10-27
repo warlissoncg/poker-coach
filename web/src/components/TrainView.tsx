@@ -94,7 +94,7 @@ export function TrainView() {
           <span><span className="font-medium">{t("focus.toggle")}</span><span className="block text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</span></span>
         </label>
       </div>}
-      <div className="grid items-stretch gap-4 lg:grid-cols-[76px_minmax(0,1fr)_300px]">
+      <div className="grid items-stretch gap-4 lg:grid-cols-[76px_minmax(0,1fr)]">
         <aside className="flex flex-row items-center justify-center gap-3 rounded-xl border bg-card p-3 lg:min-h-[360px] lg:flex-col lg:justify-between" aria-label={t("progress.spot.label")}>
           <div className="text-center lg:order-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mãos</div>
@@ -155,17 +155,20 @@ export function TrainView() {
             )}
           </div>
         </div>
-        <div className="space-y-3">
-          {last && <FeedbackCard f={last} />}
-          <details className="rounded-lg border bg-card p-3 text-sm">
-            <summary className="cursor-pointer font-medium">{t("history")}</summary>
-            <ul className="mt-2 space-y-0.5 text-muted-foreground">{drill.log.map((l, i) => <li key={i}>{line(l)}</li>)}</ul>
-            <div className="mt-3 space-y-2">{drill.feedback.slice(0, -1).map((f, i) => <FeedbackCard key={i} f={f} />)}</div>
-          </details>
+      </div>
+      <section className="space-y-3">
+        {last && <FeedbackCard f={last} />}
+        <details className="rounded-lg border bg-card p-3 text-sm">
+          <summary className="cursor-pointer font-medium">{t("history")}</summary>
+          <ul className="mt-2 space-y-0.5 text-muted-foreground">{drill.log.map((l, i) => <li key={i}>{line(l)}</li>)}</ul>
+          <div className="mt-3 space-y-2">{drill.feedback.slice(0, -1).map((f, i) => <FeedbackCard key={i} f={f} />)}</div>
+        </details>
+        <div className="space-y-1 rounded-lg border bg-card p-3">
           <p className="text-xs text-muted-foreground">{t("coach.note")}</p>
           {drill.stackBB !== 100 && <p className="text-xs text-muted-foreground">{t("ctl.note")}</p>}
           <p className="text-xs text-muted-foreground">{t("keys")}</p>
         </div>
+      </section>
       </div>
     </div>
   );
