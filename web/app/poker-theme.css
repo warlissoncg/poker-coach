@@ -20,3 +20,22 @@ body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   --accent: #1d2c25; --accent-foreground: #e9efe9;
   --destructive: #ff6b5e; --border: #25332c; --input: #25332c; --ring: #3ddc97;
 }
+
+
+/* Subtle table motion: the hand engine remains the source of truth. */
+@keyframes chip-pop {
+  0% { opacity: .65; transform: translateY(5px) scale(.92); }
+  70% { transform: translateY(-1px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pot-pulse {
+  0% { transform: scale(.96); }
+  65% { transform: scale(1.035); }
+  100% { transform: scale(1); }
+}
+.chip-stack { animation: chip-pop 240ms ease-out both; }
+.commit-chip { animation: chip-pop 260ms ease-out both; }
+.pot-readout { animation: pot-pulse 220ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .chip-stack, .commit-chip, .pot-readout { animation: none !important; }
+}
