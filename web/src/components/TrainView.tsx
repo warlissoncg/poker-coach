@@ -75,95 +75,93 @@ export function TrainView() {
   const statsProgress = Math.min(100, Math.round((currentSpotCount / 8) * 100));
   const currentSpotSummary = summarize(decisions.filter((d) => d.spot === currentSpot));
   return (
-    <div className="mx-auto max-w-5xl space-y-3">
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-1">{t("ctl.scenario")}
-          <select className={sel} value={opts.scenario} onChange={(e) => change({ scenario: e.target.value as DrillOptions["scenario"] })}>{(["any", ...SCENARIOS] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : t(`sc.${x}`)}</option>)}</select></label>
-        <label className="flex items-center gap-1">{t("ctl.stack")}
-          <select className={sel} value={opts.stackBB} onChange={(e) => change({ stackBB: e.target.value === "any" ? "any" : +e.target.value })}>{(["any", 40, 100, 200] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : `${x}bb`}</option>)}</select></label>
-        <label className="flex items-center gap-1">{t("ctl.texture")}
-          <select className={sel} value={opts.texture} onChange={(e) => change({ texture: e.target.value as DrillOptions["texture"] })}>{TEXES.map((x) => <option key={x} value={x}>{t(`tex.${x}`)}</option>)}</select></label>
-      </div>
-      <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 text-sm">
-        <span>{t("progress.hands", { n: hands + 1 })}</span>
-        <span className="text-muted-foreground">{score.n ? t("session.some", { p: Math.round((score.sum / score.n) * 100), n: score.n }) : t("session.none")}</span>
-      </div>
-      {focus && opts.scenario === "any" && <div className="rounded-lg border bg-card p-3">
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" checked={focusEnabled} onChange={(e) => { setFocusEnabled(e.target.checked); setDrill(newDrill(Math.random, opts, e.target.checked ? focus?.scenario : undefined)); }} />
-          <span><span className="font-medium">{t("focus.toggle")}</span><span className="block text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</span></span>
+    <div className="mx-auto w-full max-w-6xl space-y-4">
+      <section className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 sm:p-4">
+        <label className="flex min-w-[150px] flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">{t("ctl.scenario")}
+          <select className={sel + " h-10 w-full"} value={opts.scenario} onChange={(e) => change({ scenario: e.target.value as DrillOptions["scenario"] })}>{(["any", ...SCENARIOS] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : t(`sc.${x}`)}</option>)}</select>
         </label>
-      </div>}
-      <div className="grid items-stretch gap-4">
-
-        <div className="min-w-0 space-y-3">
-          <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-            <span>{t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</span>
-            <span className="hidden sm:inline">{showSpotStats ? "ESTATÍSTICA" : "TREINO"}</span>
-          </div>
-
-          <div className="relative h-[560px] overflow-hidden space-y-2 rounded-xl border bg-card p-3 pt-4 sm:p-5">
-            <div className="mb-2 flex items-center justify-between gap-2 border-b pb-2 pr-12">
-              <h2 className="text-sm font-bold uppercase tracking-widest">{showSpotStats ? "Estatística" : "Treino"}</h2>
-              <span className="text-xs text-muted-foreground">{showSpotStats ? "Visão de desempenho" : "Mesa ativa"}</span>
-            </div>
-            <button type="button" onClick={() => setShowSpotStats((v) => !v)} aria-label={showSpotStats ? "Flip Card: voltar para Treino" : "Flip Card: abrir Estatística"} aria-pressed={showSpotStats} className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-amber-500 bg-emerald-950 text-amber-100 shadow-md transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" title="Alternar Treino/Estatísticas">
-              <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true"><path fill="currentColor" d="M13 53 19 43 17 34 22 26 22 18 29 10 38 12 43 19 53 22 48 29 42 29 39 37 34 42 34 53 27 53 27 44 23 44 20 53Z"/><path fill="currentColor" d="M30 14 25 20 31 22 36 19 34 14Z"/><path fill="none" stroke="#d6a84f" strokeWidth="2" d="M8 57H56"/></svg>
-            </button>
-            {showSpotStats ? (
-              <div className="flex h-[470px] flex-col gap-3 p-1">
-                <div className="text-xs uppercase tracking-widest text-muted-foreground">{t("stats.byspot")}</div>
-                <h3 className="mt-2 text-lg font-semibold">{spot(currentSpot)}</h3>
-                <div className="my-1 text-4xl font-bold tabular-nums">{currentSpotSummary.total ? `${Math.round(currentSpotSummary.aligned * 100)}%` : "—"}</div>
-                <p className="text-sm text-muted-foreground">{t("stats.sample", { n: currentSpotSummary.total, p: currentSpotSummary.total ? Math.round(currentSpotSummary.aligned * 100) : 0 })}</p>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, currentSpotSummary.total / 8 * 100)}%` }} /></div>
-                <p className="mt-2 text-xs text-muted-foreground">{t("stats.threshold", { n: currentSpotSummary.total, goal: 8 })}</p>
-                <aside className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-2" aria-label={t("progress.spot.label")}>
-          <div className="text-center">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mãos</div>
-            <div className="mt-1 text-lg font-bold tabular-nums">{hands}</div>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <div className="relative flex h-20 w-4 items-end justify-center rounded-full border-2 border-muted-foreground/50 bg-muted/60 p-1 ">
-              <div className="absolute -top-2 left-1/2 z-10 h-5 w-5 -translate-x-1/2 rounded-full border-2 border-amber-500 bg-card shadow-sm" title={currentSpotCount >= 8 ? "Amostra mínima atingida" : "Amostra mínima: 8 decisões"} />
-              <div className="relative flex h-full w-full items-end overflow-hidden rounded-full">
-                <div className={`w-full rounded-full transition-[height] duration-700 ease-out ${currentSpotCount >= 8 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ height: `${statsProgress}%` }} />
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm font-bold tabular-nums">{Math.min(currentSpotCount, 8)}/8</div>
-              <div className="text-[10px] leading-tight text-muted-foreground">decisões</div>
-            </div>
-          </div>
-          <div className="text-center lg:order-3">
-            <div className={`text-[10px] font-semibold uppercase tracking-wider ${currentSpotCount >= 8 ? "text-emerald-600" : "text-muted-foreground"}`}>{currentSpotCount >= 8 ? "Amostra mínima" : "Coletando dados"}</div>
-            <div className="text-[10px] text-muted-foreground">{statsProgress}%</div>
-          </div>
-                </aside>
-              </div>
-            ) : (
-              <>
-                <div className="flex h-[420px] flex-col justify-between gap-2 overflow-hidden"><div className="min-h-0 flex-1 overflow-hidden"><Table hand={drill.hand} reveal={drill.hand.street === "showdown"} /></div>
-                {over ? (
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3">
-                    <b>{res(resultBB(drill))}</b>
-                    <Button size="lg" onClick={next}>{t("next")} <kbd className="ml-1 text-xs opacity-60">Enter</kbd></Button>
-                  </div>
-                ) : <div className="shrink-0"><ActionBar hand={drill.hand} onAct={act} /></div>}
-                </div>
-              </>
-            )}
-          </div>
+        <label className="flex min-w-[110px] flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">{t("ctl.stack")}
+          <select className={sel + " h-10 w-full"} value={opts.stackBB} onChange={(e) => change({ stackBB: e.target.value === "any" ? "any" : +e.target.value })}>{(["any", 40, 100, 200] as const).map((x) => <option key={x} value={x}>{x === "any" ? t("tex.any") : `${x}bb`}</option>)}</select>
+        </label>
+        <label className="flex min-w-[140px] flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">{t("ctl.texture")}
+          <select className={sel + " h-10 w-full"} value={opts.texture} onChange={(e) => change({ texture: e.target.value as DrillOptions["texture"] })}>{TEXES.map((x) => <option key={x} value={x}>{t(`tex.${x}`)}</option>)}</select>
+        </label>
+        <div className="flex min-h-10 flex-1 items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm">
+          <span>{t("progress.hands", { n: hands + 1 })}</span>
+          <span className="text-right text-xs text-muted-foreground">{score.n ? t("session.some", { p: Math.round((score.sum / score.n) * 100), n: score.n }) : t("session.none")}</span>
         </div>
-      </div>
+      </section>
+
+      {focus && opts.scenario === "any" && (
+        <section className="rounded-xl border bg-card px-3 py-2.5">
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
+            <input className="mt-1" type="checkbox" checked={focusEnabled} onChange={(e) => { setFocusEnabled(e.target.checked); setDrill(newDrill(Math.random, opts, e.target.checked ? focus?.scenario : undefined)); }} />
+            <span><span className="font-medium">{t("focus.toggle")}</span><span className="block text-xs text-muted-foreground">{t("focus.recommend", { spot: spot(focus.spot), p: Math.round(focus.aligned * 100), n: focus.n })}</span></span>
+          </label>
+        </section>
+      )}
+
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <header className="flex min-h-16 items-center justify-between gap-3 border-b px-4 py-3 pr-16 sm:px-5">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">The Grind Lab</div>
+            <h2 className="truncate text-base font-bold sm:text-lg">{showSpotStats ? "Estatísticas do spot" : t("hand", { n: hands + 1, sc: t(`sc.${drill.scenario}`), st: drill.stackBB })}</h2>
+          </div>
+          <span className="shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{showSpotStats ? "Desempenho" : "Treino ativo"}</span>
+        </header>
+
+        <div className="relative p-3 sm:p-5">
+          <button type="button" onClick={() => setShowSpotStats((v) => !v)} aria-label={showSpotStats ? "Voltar ao treino" : "Abrir estatísticas"} aria-pressed={showSpotStats} className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-amber-500 bg-emerald-950 text-amber-100 shadow-md transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:right-5 sm:top-4" title={showSpotStats ? "Voltar ao treino" : "Ver estatísticas"}>
+            <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true"><path fill="currentColor" d="M13 53 19 43 17 34 22 26 22 18 29 10 38 12 43 19 53 22 48 29 42 29 39 37 34 42 34 53 27 53 27 44 23 44 20 53Z"/><path fill="currentColor" d="M30 14 25 20 31 22 36 19 34 14Z"/><path fill="none" stroke="#d6a84f" strokeWidth="2" d="M8 57H56"/></svg>
+          </button>
+
+          {showSpotStats ? (
+            <div className="space-y-5 pt-1">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border bg-muted/30 p-4 sm:col-span-2">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("stats.byspot")}</div>
+                  <h3 className="mt-2 text-lg font-bold">{spot(currentSpot)}</h3>
+                  <div className="mt-3 flex flex-wrap items-baseline gap-3">
+                    <span className="text-4xl font-bold tabular-nums">{currentSpotSummary.total ? `${Math.round(currentSpotSummary.aligned * 100)}%` : "—"}</span>
+                    <span className="text-sm text-muted-foreground">{t("stats.sample", { n: currentSpotSummary.total, p: currentSpotSummary.total ? Math.round(currentSpotSummary.aligned * 100) : 0 })}</span>
+                  </div>
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${Math.min(100, currentSpotSummary.total / 8 * 100)}%` }} /></div>
+                  <p className="mt-2 text-xs text-muted-foreground">{t("stats.threshold", { n: currentSpotSummary.total, goal: 8 })}</p>
+                </div>
+                <div className="flex flex-col justify-between gap-3 rounded-xl border p-4" aria-label={t("progress.spot.label")}>
+                  <div><div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mãos nesta sessão</div><div className="mt-1 text-2xl font-bold tabular-nums">{hands}</div></div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full transition-[width] ${currentSpotCount >= 8 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${statsProgress}%` }} /></div>
+                    <span className="text-sm font-bold tabular-nums">{Math.min(currentSpotCount, 8)}/8</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs"><span className={currentSpotCount >= 8 ? "font-semibold text-emerald-600" : "text-muted-foreground"}>{currentSpotCount >= 8 ? "Amostra mínima atingida" : "Coletando dados"}</span><span className="text-muted-foreground">{statsProgress}%</span></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="rounded-xl bg-emerald-950/5 p-1 sm:p-2">
+                <Table hand={drill.hand} reveal={drill.hand.street === "showdown"} />
+              </div>
+              {over ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/30 p-3">
+                  <b>{res(resultBB(drill))}</b>
+                  <Button size="lg" onClick={next}>{t("next")} <kbd className="ml-1 text-xs opacity-60">Enter</kbd></Button>
+                </div>
+              ) : <div className="rounded-xl border bg-muted/20 p-3 sm:p-4"><ActionBar hand={drill.hand} onAct={act} /></div>}
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="space-y-3">
         {last && <FeedbackCard f={last} />}
-        <details className="rounded-lg border bg-card p-3 text-sm">
-          <summary className="cursor-pointer font-medium">{t("history")}</summary>
-          <ul className="mt-2 space-y-0.5 text-muted-foreground">{drill.log.map((l, i) => <li key={i}>{line(l)}</li>)}</ul>
-          <div className="mt-3 space-y-2">{drill.feedback.slice(0, -1).map((f, i) => <FeedbackCard key={i} f={f} />)}</div>
+        <details className="rounded-xl border bg-card p-3 text-sm">
+          <summary className="cursor-pointer font-semibold">{t("history")}</summary>
+          <ul className="mt-3 space-y-1 text-muted-foreground">{drill.log.map((l, i) => <li key={i}>{line(l)}</li>)}</ul>
+          {drill.feedback.length > 1 && <div className="mt-3 space-y-2">{drill.feedback.slice(0, -1).map((f, i) => <FeedbackCard key={i} f={f} />)}</div>}
         </details>
-        <div className="space-y-1 rounded-lg border bg-card p-3">
+        <div className="space-y-1 rounded-xl border bg-muted/30 p-3">
           <p className="text-xs text-muted-foreground">{t("coach.note")}</p>
           {drill.stackBB !== 100 && <p className="text-xs text-muted-foreground">{t("ctl.note")}</p>}
           <p className="text-xs text-muted-foreground">{t("keys")}</p>
